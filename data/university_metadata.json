@@ -1,0 +1,47 @@
+{
+  "universities": {
+    "早稲田大学_法学部": {
+      "full_name": "早稲田大学 法学部",
+      "short_name": "早稲田法",
+      "category": "私立",
+      "region": "関東",
+      "color": "#8B0000"
+    },
+    "早稲田大学_政治経済学部": {
+      "full_name": "早稲田大学 政治経済学部",
+      "short_name": "早稲田政経",
+      "category": "私立",
+      "region": "関東",
+      "color": "#DC143C"
+    },
+    "東京大学": {
+      "full_name": "東京大学",
+      "short_name": "東大",
+      "category": "国立",
+      "region": "関東",
+      "color": "#191970"
+    }
+  },
+  "vocabulary_books": {
+    "Target 1900": {
+      "color": "#FF6B6B",
+      "description": "定番の大学受験単語帳"
+    },
+    "Target 1400": {
+      "color": "#4ECDC4",
+      "description": "基礎レベル重視の単語帳"
+    },
+    "システム英単語": {
+      "color": "#45B7D1",
+      "description": "システマティックな学習"
+    },
+    "LEAP": {
+      "color": "#96CEB4",
+      "description": "4技能対応単語帳"
+    },
+    "鉄壁": {
+      "color": "#FFEAA7",
+      "description": "難関大学対策単語帳"
+    }
+  }
+}

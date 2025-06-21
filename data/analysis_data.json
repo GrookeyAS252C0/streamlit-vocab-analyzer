@@ -1,0 +1,168 @@
+{
+  "metadata": {
+    "generated_at": "2025-06-21T09:35:37.420512",
+    "source_file": "multi_vocabulary_analysis_report.json",
+    "data_version": "1.0"
+  },
+  "overall_summary": {
+    "total_source_files": 3,
+    "total_words_extracted": 2353,
+    "average_ocr_confidence": 95.95,
+    "analysis_timestamp": "2025-06-20T22:54:27.661330",
+    "vocabulary_books": [
+      "Target 1900",
+      "Target 1400",
+      "システム英単語",
+      "LEAP",
+      "鉄壁"
+    ]
+  },
+  "vocabulary_summary": {
+    "Target 1900": {
+      "target_total_words": 1897,
+      "matched_words_count": 460,
+      "target_coverage_rate": 24.25,
+      "extraction_precision": 26.96
+    },
+    "Target 1400": {
+      "target_total_words": 1398,
+      "matched_words_count": 509,
+      "target_coverage_rate": 36.41,
+      "extraction_precision": 29.84
+    },
+    "システム英単語": {
+      "target_total_words": 2023,
+      "matched_words_count": 497,
+      "target_coverage_rate": 24.57,
+      "extraction_precision": 29.13
+    },
+    "LEAP": {
+      "target_total_words": 1931,
+      "matched_words_count": 563,
+      "target_coverage_rate": 29.16,
+      "extraction_precision": 33.0
+    },
+    "鉄壁": {
+      "target_total_words": 2168,
+      "matched_words_count": 515,
+      "target_coverage_rate": 23.75,
+      "extraction_precision": 30.19
+    }
+  },
+  "university_analysis": {
+    "早稲田大学_法学部": {
+      "source_file": "早稲田大学_2024年度_英語_法学部.pdf",
+      "total_words": 823,
+      "unique_words": 765,
+      "ocr_confidence": 96.67,
+      "pages_processed": 8,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 211,
+          "target_coverage_rate": 11.12,
+          "extraction_precision": 27.58
+        },
+        "Target 1400": {
+          "matched_words_count": 228,
+          "target_coverage_rate": 16.31,
+          "extraction_precision": 29.8
+        },
+        "システム英単語": {
+          "matched_words_count": 228,
+          "target_coverage_rate": 11.27,
+          "extraction_precision": 29.8
+        },
+        "LEAP": {
+          "matched_words_count": 261,
+          "target_coverage_rate": 13.52,
+          "extraction_precision": 34.12
+        },
+        "鉄壁": {
+          "matched_words_count": 244,
+          "target_coverage_rate": 11.25,
+          "extraction_precision": 31.9
+        }
+      }
+    },
+    "早稲田大学_政治経済学部": {
+      "source_file": "早稲田大学_2024年度_英語_政治経済学部.pdf",
+      "total_words": 715,
+      "unique_words": 677,
+      "ocr_confidence": 95.16,
+      "pages_processed": 8,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 182,
+          "target_coverage_rate": 9.59,
+          "extraction_precision": 26.88
+        },
+        "Target 1400": {
+          "matched_words_count": 220,
+          "target_coverage_rate": 15.74,
+          "extraction_precision": 32.5
+        },
+        "システム英単語": {
+          "matched_words_count": 207,
+          "target_coverage_rate": 10.23,
+          "extraction_precision": 30.58
+        },
+        "LEAP": {
+          "matched_words_count": 246,
+          "target_coverage_rate": 12.74,
+          "extraction_precision": 36.34
+        },
+        "鉄壁": {
+          "matched_words_count": 219,
+          "target_coverage_rate": 10.1,
+          "extraction_precision": 32.35
+        }
+      }
+    },
+    "東京大学": {
+      "source_file": "東京大学_2024年度_英語.pdf",
+      "total_words": 815,
+      "unique_words": 740,
+      "ocr_confidence": 96.03,
+      "pages_processed": 6,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 182,
+          "target_coverage_rate": 9.59,
+          "extraction_precision": 24.59
+        },
+        "Target 1400": {
+          "matched_words_count": 228,
+          "target_coverage_rate": 16.31,
+          "extraction_precision": 30.81
+        },
+        "システム英単語": {
+          "matched_words_count": 178,
+          "target_coverage_rate": 8.8,
+          "extraction_precision": 24.05
+        },
+        "LEAP": {
+          "matched_words_count": 234,
+          "target_coverage_rate": 12.12,
+          "extraction_precision": 31.62
+        },
+        "鉄壁": {
+          "matched_words_count": 194,
+          "target_coverage_rate": 8.95,
+          "extraction_precision": 26.22
+        }
+      }
+    }
+  },
+  "top_frequent_words": {
+    "make": 7,
+    "take": 7,
+    "live": 7,
+    "year": 6,
+    "say": 6,
+    "mean": 6,
+    "write": 6,
+    "grow": 6,
+    "get": 6,
+    "run": 5
+  }
+}
