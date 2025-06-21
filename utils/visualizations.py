@@ -109,6 +109,16 @@ def create_university_heatmap(data: Dict) -> go.Figure:
     vocabulary_list = list(data.get('vocabulary_summary', {}).keys())
     university_list = list(university_data.keys())
     
+    # 大学名を短縮表示用に変換
+    def shorten_university_name(name):
+        if "早稲田大学_" in name:
+            return name.replace("早稲田大学_", "早大_")
+        elif "東京大学" in name:
+            return "東大"
+        return name
+    
+    shortened_university_list = [shorten_university_name(univ) for univ in university_list]
+    
     # ヒートマップ用データ作成
     heatmap_data = []
     for university in university_list:
@@ -122,19 +132,21 @@ def create_university_heatmap(data: Dict) -> go.Figure:
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data,
         x=vocabulary_list,
-        y=university_list,
+        y=shortened_university_list,
         colorscale='RdYlBu_r',
         text=[[f"{val:.1f}%" for val in row] for row in heatmap_data],
         texttemplate="%{text}",
-        textfont={"size": 10},
-        hoverongaps=False
+        textfont={"size": 9},
+        hoverongaps=False,
+        customdata=university_list,  # 元の大学名をホバー情報として保持
+        hovertemplate='<b>%{customdata}</b><br>%{x}: %{z:.1f}%<extra></extra>'
     ))
     
     fig.update_layout(
         title='大学×単語帳 カバレッジ率ヒートマップ',
         xaxis_title='単語帳',
         yaxis_title='大学・学部',
-        height=400
+        height=max(400, len(university_list) * 25)  # 大学数に応じて高さを調整
     )
     
     return fig

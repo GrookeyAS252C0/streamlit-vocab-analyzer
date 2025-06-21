@@ -115,10 +115,17 @@ def setup_sidebar(data: dict, metadata: dict):
     
     # 大学選択
     universities = get_university_list(data)
+    if not universities:
+        st.sidebar.error("大学データが見つかりません")
+        st.sidebar.write("デバッグ情報:", list(data.keys()))
+    
+    # デバッグ情報表示（一時的）
+    st.sidebar.write(f"取得した大学数: {len(universities)}")
+    
     selected_universities = st.sidebar.multiselect(
         "大学・学部を選択",
         universities,
-        default=universities
+        default=universities[:5] if len(universities) > 5 else universities  # 最初の5つをデフォルトに変更
     )
     st.session_state.selected_universities = selected_universities
     
@@ -305,6 +312,16 @@ def show_university_page(data: dict, metadata: dict):
     
     # 大学選択
     universities = get_university_list(data)
+    
+    # デバッグ情報表示
+    st.write(f"デバッグ: 利用可能な大学数 = {len(universities)}")
+    if universities:
+        st.write("利用可能な大学例:", universities[:3])
+    
+    if not universities:
+        st.error("大学データが見つかりません。データファイルを確認してください。")
+        return
+    
     selected_university = st.selectbox("詳細を表示する大学・学部を選択", universities)
     
     if not selected_university:
@@ -417,6 +434,12 @@ def show_comparison_page(data: dict, metadata: dict):
     
     # 比較対象選択
     universities = get_university_list(data)
+    
+    # デバッグ情報
+    st.write(f"デバッグ: 利用可能な大学数 = {len(universities)}")
+    if universities:
+        st.write("利用可能な大学:", universities[:5])  # 最初の5つを表示
+    
     selected_universities = st.multiselect(
         "比較する大学・学部を選択（2つ以上）",
         universities,
