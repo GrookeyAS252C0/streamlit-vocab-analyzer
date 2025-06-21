@@ -286,13 +286,23 @@ def show_university_page(data: dict, metadata: dict):
     vocab_df = pd.DataFrame(vocab_df_data)
     
     # スタイル付きテーブル
-    st.dataframe(
-        vocab_df.style.format({
-            'カバレッジ率(%)': '{:.1f}',
-            '抽出精度(%)': '{:.1f}'
-        }).background_gradient(subset=['カバレッジ率(%)', '抽出精度(%)'], cmap='RdYlGn'),
-        use_container_width=True
-    )
+    try:
+        st.dataframe(
+            vocab_df.style.format({
+                'カバレッジ率(%)': '{:.1f}',
+                '抽出精度(%)': '{:.1f}'
+            }).background_gradient(subset=['カバレッジ率(%)', '抽出精度(%)'], cmap='RdYlGn'),
+            use_container_width=True
+        )
+    except ImportError:
+        # matplotlibが利用できない場合のフォールバック
+        st.dataframe(
+            vocab_df.style.format({
+                'カバレッジ率(%)': '{:.1f}',
+                '抽出精度(%)': '{:.1f}'
+            }),
+            use_container_width=True
+        )
     
     # 単語帳比較チャート
     if len(vocab_df_data) > 1:
@@ -357,16 +367,26 @@ def show_comparison_page(data: dict, metadata: dict):
         st.subheader("📊 大学別パフォーマンス詳細テーブル")
         performance_df = create_performance_metrics_table(data, selected_universities)
         
-        st.dataframe(
-            performance_df.style.format({
-                'OCR信頼度(%)': '{:.1f}',
-                '最高カバレッジ率(%)': '{:.1f}'
-            }).background_gradient(
-                subset=['OCR信頼度(%)', '最高カバレッジ率(%)'], 
-                cmap='RdYlGn'
-            ),
-            use_container_width=True
-        )
+        try:
+            st.dataframe(
+                performance_df.style.format({
+                    'OCR信頼度(%)': '{:.1f}',
+                    '最高カバレッジ率(%)': '{:.1f}'
+                }).background_gradient(
+                    subset=['OCR信頼度(%)', '最高カバレッジ率(%)'], 
+                    cmap='RdYlGn'
+                ),
+                use_container_width=True
+            )
+        except ImportError:
+            # matplotlibが利用できない場合のフォールバック
+            st.dataframe(
+                performance_df.style.format({
+                    'OCR信頼度(%)': '{:.1f}',
+                    '最高カバレッジ率(%)': '{:.1f}'
+                }),
+                use_container_width=True
+            )
     
     with tab3:
         st.subheader("🏆 大学ランキング")
