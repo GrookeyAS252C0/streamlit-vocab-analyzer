@@ -113,19 +113,41 @@ def setup_sidebar(data: dict, metadata: dict):
     # フィルター設定
     st.sidebar.subheader("🔍 フィルター")
     
+    # カバレッジ率閾値（先に設定）
+    min_coverage = st.sidebar.slider(
+        "最小カバレッジ率 (%)",
+        min_value=0.0,
+        max_value=50.0,
+        value=0.0,
+        step=1.0,
+        help="この値より低いカバレッジ率の大学は表示されません"
+    )
+    st.session_state.min_coverage = min_coverage
+    
     # 大学選択
-    universities = get_university_list(data)
-    if not universities:
+    all_universities = get_university_list(data)
+    if not all_universities:
         st.sidebar.error("大学データが見つかりません")
         st.sidebar.write("デバッグ情報:", list(data.keys()))
     
-    # デバッグ情報表示（一時的）
-    st.sidebar.write(f"取得した大学数: {len(universities)}")
+    # フィルタリングを適用（ただし、閾値が0の場合はすべて表示）
+    if min_coverage > 0:
+        from utils.data_loader import filter_universities_by_criteria
+        universities = filter_universities_by_criteria(data, min_coverage)
+    else:
+        universities = all_universities
+    
+    # デバッグ情報表示
+    st.sidebar.write(f"全大学数: {len(all_universities)} | フィルター後: {len(universities)}")
+    if min_coverage > 0:
+        st.sidebar.write(f"フィルター条件: カバレッジ率 ≥ {min_coverage}%")
+    else:
+        st.sidebar.write("フィルター: なし（全大学表示）")
     
     selected_universities = st.sidebar.multiselect(
         "大学・学部を選択",
         universities,
-        default=universities[:5] if len(universities) > 5 else universities  # 最初の5つをデフォルトに変更
+        default=universities[:5] if len(universities) > 5 else universities
     )
     st.session_state.selected_universities = selected_universities
     
@@ -138,16 +160,6 @@ def setup_sidebar(data: dict, metadata: dict):
     )
     st.session_state.selected_vocabularies = selected_vocabularies
     
-    # カバレッジ率閾値
-    min_coverage = st.sidebar.slider(
-        "最小カバレッジ率 (%)",
-        min_value=0.0,
-        max_value=50.0,
-        value=0.0,
-        step=1.0
-    )
-    st.session_state.min_coverage = min_coverage
-    
     st.sidebar.markdown("---")
     
     # 簡潔な指標説明
@@ -159,6 +171,21 @@ def setup_sidebar(data: dict, metadata: dict):
     
     **一致語数**: 実際に一致した語数
     """)
+    
+    # 低カバレッジ率の説明
+    if min_coverage == 0:
+        st.sidebar.info("""
+        📌 **注意**: 一部の大学・学部はカバレッジ率が0.43%と低くなっています。
+        これはOCR処理の品質や問題形式の違いによるものです。
+        """)
+    
+    # フィルタリングされた大学への説明
+    if len(universities) < len(all_universities):
+        hidden_count = len(all_universities) - len(universities)
+        st.sidebar.warning(f"""
+        ⚠️ {hidden_count}大学がフィルターで非表示です。
+        すべての大学を表示するには、カバレッジ率を0%に設定してください。
+        """)
     
     st.sidebar.markdown("---")
     
