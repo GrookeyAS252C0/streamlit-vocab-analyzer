@@ -399,26 +399,60 @@ def show_comparison_page(data: dict, metadata: dict):
         
         performance_df = create_performance_metrics_table(data, selected_universities)
         
-        if ranking_criteria == "最高カバレッジ率":
-            sorted_df = performance_df.sort_values('最高カバレッジ率(%)', ascending=False)
-        elif ranking_criteria == "OCR信頼度":
-            sorted_df = performance_df.sort_values('OCR信頼度(%)', ascending=False)
-        elif ranking_criteria == "総単語数":
-            sorted_df = performance_df.sort_values('総単語数', ascending=False)
-        else:  # ユニーク単語数
-            sorted_df = performance_df.sort_values('ユニーク単語数', ascending=False)
+        # デバッグ情報（本番では削除可能）
+        # st.write("DEBUG - DataFrame columns:", performance_df.columns.tolist())
+        
+        try:
+            if ranking_criteria == "最高カバレッジ率":
+                sorted_df = performance_df.sort_values('最高カバレッジ率(%)', ascending=False)
+            elif ranking_criteria == "OCR信頼度":
+                sorted_df = performance_df.sort_values('OCR信頼度(%)', ascending=False)
+            elif ranking_criteria == "総単語数":
+                sorted_df = performance_df.sort_values('総単語数', ascending=False)
+            else:  # ユニーク単語数
+                sorted_df = performance_df.sort_values('ユニーク単語数', ascending=False)
+        except KeyError as e:
+            st.error(f"ソートエラー: 列 '{e}' が見つかりません。利用可能な列: {performance_df.columns.tolist()}")
+            sorted_df = performance_df
         
         # ランキング表示
         for i, (_, row) in enumerate(sorted_df.iterrows(), 1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}位"
             
-            with st.container():
-                st.markdown(f"""
-                ### {medal} {row['大学・学部']}
-                - **{ranking_criteria}**: {row[ranking_criteria]}
-                - **最適単語帳**: {row['最適単語帳']}
-                - **OCR信頼度**: {row['OCR信頼度(%)']}%
-                """)
+            # 列名のマッピング
+            column_mapping = {
+                "最高カバレッジ率": "最高カバレッジ率(%)",
+                "OCR信頼度": "OCR信頼度(%)",
+                "総単語数": "総単語数",
+                "ユニーク単語数": "ユニーク単語数"
+            }
+            
+            actual_column = column_mapping.get(ranking_criteria, ranking_criteria)
+            
+            try:
+                criteria_value = row[actual_column]
+                
+                # 値の表示形式を調整
+                if "%" in actual_column:
+                    criteria_display = f"{criteria_value}%"
+                else:
+                    criteria_display = f"{criteria_value:,}"
+                
+                with st.container():
+                    st.markdown(f"""
+                    ### {medal} {row['大学・学部']}
+                    - **{ranking_criteria}**: {criteria_display}
+                    - **最適単語帳**: {row['最適単語帳']}
+                    - **OCR信頼度**: {row['OCR信頼度(%)']}%
+                    """)
+            except KeyError as e:
+                st.error(f"表示エラー: 列 '{e}' が見つかりません。")
+                with st.container():
+                    st.markdown(f"""
+                    ### {medal} {row['大学・学部']}
+                    - **最適単語帳**: {row.get('最適単語帳', 'N/A')}
+                    - **OCR信頼度**: {row.get('OCR信頼度(%)', 0)}%
+                    """)
 
 if __name__ == "__main__":
     main()
