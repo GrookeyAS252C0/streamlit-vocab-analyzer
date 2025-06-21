@@ -1,14 +1,14 @@
 {
   "metadata": {
-    "generated_at": "2025-06-21T22:24:11.125715",
+    "generated_at": "2025-06-21T22:32:58.072561",
     "source_file": "multi_vocabulary_analysis_report.json",
     "data_version": "1.0"
   },
   "overall_summary": {
-    "total_source_files": 3,
-    "total_words_extracted": 2353,
-    "average_ocr_confidence": 95.95,
-    "analysis_timestamp": "2025-06-21T22:24:06.837623",
+    "total_source_files": 11,
+    "total_words_extracted": 10671,
+    "average_ocr_confidence": 96.34,
+    "analysis_timestamp": "2025-06-21T22:32:50.995493",
     "vocabulary_books": [
       "Target 1900",
       "Target 1400",
@@ -20,33 +20,33 @@
   "vocabulary_summary": {
     "Target 1900": {
       "target_total_words": 1897,
-      "matched_words_count": 460,
-      "target_coverage_rate": 24.25,
-      "extraction_precision": 26.96
+      "matched_words_count": 461,
+      "target_coverage_rate": 24.3,
+      "extraction_precision": 15.4
     },
     "Target 1400": {
       "target_total_words": 1398,
-      "matched_words_count": 509,
-      "target_coverage_rate": 36.41,
-      "extraction_precision": 29.84
+      "matched_words_count": 510,
+      "target_coverage_rate": 36.48,
+      "extraction_precision": 17.03
     },
     "システム英単語": {
       "target_total_words": 2023,
-      "matched_words_count": 497,
-      "target_coverage_rate": 24.57,
-      "extraction_precision": 29.13
+      "matched_words_count": 498,
+      "target_coverage_rate": 24.62,
+      "extraction_precision": 16.63
     },
     "LEAP": {
       "target_total_words": 1931,
-      "matched_words_count": 563,
-      "target_coverage_rate": 29.16,
-      "extraction_precision": 33.0
+      "matched_words_count": 564,
+      "target_coverage_rate": 29.21,
+      "extraction_precision": 18.84
     },
     "鉄壁": {
       "target_total_words": 2168,
-      "matched_words_count": 515,
-      "target_coverage_rate": 23.75,
-      "extraction_precision": 30.19
+      "matched_words_count": 516,
+      "target_coverage_rate": 23.8,
+      "extraction_precision": 17.23
     }
   },
   "university_analysis": {
@@ -151,18 +151,154 @@
           "extraction_precision": 26.22
         }
       }
+    },
+    "早稲田大学": {
+      "source_file": "早稲田大学_2024年度_英語_教育学部.pdf",
+      "total_words": 1132,
+      "unique_words": 1132,
+      "ocr_confidence": 97.0,
+      "pages_processed": 13,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 5,
+          "target_coverage_rate": 0.26,
+          "extraction_precision": 0.44
+        },
+        "Target 1400": {
+          "matched_words_count": 6,
+          "target_coverage_rate": 0.43,
+          "extraction_precision": 0.53
+        },
+        "システム英単語": {
+          "matched_words_count": 3,
+          "target_coverage_rate": 0.15,
+          "extraction_precision": 0.27
+        },
+        "LEAP": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.36,
+          "extraction_precision": 0.62
+        },
+        "鉄壁": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.32,
+          "extraction_precision": 0.62
+        }
+      }
+    },
+    "早稲田大学_文学部": {
+      "source_file": "早稲田大学_2024年度_英語_文学部.pdf",
+      "total_words": 759,
+      "unique_words": 759,
+      "ocr_confidence": 96.1,
+      "pages_processed": 5,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 5,
+          "target_coverage_rate": 0.26,
+          "extraction_precision": 0.66
+        },
+        "Target 1400": {
+          "matched_words_count": 6,
+          "target_coverage_rate": 0.43,
+          "extraction_precision": 0.79
+        },
+        "システム英単語": {
+          "matched_words_count": 3,
+          "target_coverage_rate": 0.15,
+          "extraction_precision": 0.4
+        },
+        "LEAP": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.36,
+          "extraction_precision": 0.92
+        },
+        "鉄壁": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.32,
+          "extraction_precision": 0.92
+        }
+      }
+    },
+    "早稲田大学_商学部": {
+      "source_file": "早稲田大学_2024年度_英語_商学部.pdf",
+      "total_words": 1239,
+      "unique_words": 1239,
+      "ocr_confidence": 96.4,
+      "pages_processed": 10,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 5,
+          "target_coverage_rate": 0.26,
+          "extraction_precision": 0.4
+        },
+        "Target 1400": {
+          "matched_words_count": 6,
+          "target_coverage_rate": 0.43,
+          "extraction_precision": 0.48
+        },
+        "システム英単語": {
+          "matched_words_count": 3,
+          "target_coverage_rate": 0.15,
+          "extraction_precision": 0.24
+        },
+        "LEAP": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.36,
+          "extraction_precision": 0.56
+        },
+        "鉄壁": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.32,
+          "extraction_precision": 0.56
+        }
+      }
+    },
+    "早稲田大学_理工学部": {
+      "source_file": "早稲田大学_2024年度_英語_基幹理工学部・創造理工学部・先進理工学部.pdf",
+      "total_words": 878,
+      "unique_words": 878,
+      "ocr_confidence": 95.2,
+      "pages_processed": 11,
+      "vocabulary_coverage": {
+        "Target 1900": {
+          "matched_words_count": 5,
+          "target_coverage_rate": 0.26,
+          "extraction_precision": 0.57
+        },
+        "Target 1400": {
+          "matched_words_count": 6,
+          "target_coverage_rate": 0.43,
+          "extraction_precision": 0.68
+        },
+        "システム英単語": {
+          "matched_words_count": 3,
+          "target_coverage_rate": 0.15,
+          "extraction_precision": 0.34
+        },
+        "LEAP": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.36,
+          "extraction_precision": 0.8
+        },
+        "鉄壁": {
+          "matched_words_count": 7,
+          "target_coverage_rate": 0.32,
+          "extraction_precision": 0.8
+        }
+      }
     }
   },
   "top_frequent_words": {
-    "make": 7,
-    "take": 7,
-    "live": 7,
-    "year": 6,
-    "say": 6,
-    "mean": 6,
-    "write": 6,
-    "grow": 6,
-    "get": 6,
-    "run": 5
+    "learn": 12,
+    "study": 12,
+    "school": 11,
+    "human": 11,
+    "society": 11,
+    "world": 11,
+    "important": 10,
+    "student": 10,
+    "research": 10,
+    "academic": 10
   }
 }
