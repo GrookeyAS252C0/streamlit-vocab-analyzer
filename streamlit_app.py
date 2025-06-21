@@ -167,8 +167,22 @@ def show_overview_page(data: dict, metadata: dict):
     """概要ダッシュボードページ"""
     st.markdown('<div class="sub-header">🏠 概要ダッシュボード</div>', unsafe_allow_html=True)
     
-    # 指標の説明
-    with st.expander("📖 指標の意味を確認する", expanded=False):
+    # 簡潔な定義（常時表示）
+    col1, col2 = st.columns(2)
+    with col1:
+        st.info("""
+        **📈 カバレッジ率とは？**  
+        単語帳の何%の語彙が実際の入試問題に出現したかを示す指標。高いほど実用的。
+        """)
+    
+    with col2:
+        st.info("""
+        **🎯 抽出精度とは？**  
+        抽出した単語のうち、単語帳に含まれる割合。高いほど学習効率が良い。
+        """)
+    
+    # 詳細な指標の説明
+    with st.expander("📖 詳しい指標の意味を確認する", expanded=False):
         col1, col2 = st.columns(2)
         
         with col1:
