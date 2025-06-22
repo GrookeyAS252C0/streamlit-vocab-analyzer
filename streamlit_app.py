@@ -146,7 +146,7 @@ def setup_sidebar(data: dict, metadata: dict):
     selected_universities = st.sidebar.multiselect(
         "大学・学部を選択",
         universities,
-        default=universities[:5] if len(universities) > 5 else universities
+        default=[]  # 最初は何も選択しない
     )
     st.session_state.selected_universities = selected_universities
     
@@ -252,24 +252,48 @@ def show_overview_page(data: dict, metadata: dict):
     
     st.markdown("---")
     
-    # サマリー統計
-    summary_stats = calculate_summary_stats(data)
-    overall_summary = data.get('overall_summary', {})
+    # 大学選択状況を確認
+    selected_universities = st.session_state.get('selected_universities', [])
     
-    # メトリクス表示
+    if not selected_universities:
+        # 大学が選択されていない場合
+        st.info("""
+        👈 **左のサイドバーから大学・学部を選択してください**
+        
+        選択した大学・学部の語彙分析結果とチャートが表示されます。
+        
+        - 複数の大学・学部を選択して比較分析も可能です
+        - カバレッジ率の閾値設定でフィルタリングもできます
+        """)
+        return
+    
+    # 選択された大学のデータに基づいてサマリー統計を計算
+    filtered_data = {
+        'university_analysis': {k: v for k, v in data.get('university_analysis', {}).items() if k in selected_universities},
+        'vocabulary_summary': data.get('vocabulary_summary', {}),
+        'overall_summary': data.get('overall_summary', {})
+    }
+    summary_stats = calculate_summary_stats(filtered_data)
+    
+    # 選択された大学の統計
+    selected_total_words = sum([info.get('total_words', 0) for univ, info in data.get('university_analysis', {}).items() if univ in selected_universities])
+    selected_total_pages = sum([info.get('pages_processed', 0) for univ, info in data.get('university_analysis', {}).items() if univ in selected_universities])
+    selected_avg_confidence = sum([info.get('ocr_confidence', 0) for univ, info in data.get('university_analysis', {}).items() if univ in selected_universities]) / len(selected_universities) if selected_universities else 0
+    
+    # メトリクス表示（選択された大学のみ）
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.metric(
-            label="総単語数",
-            value=f"{overall_summary.get('total_words_extracted', 0):,}",
-            delta=None
+            label="選択大学総単語数",
+            value=f"{selected_total_words:,}",
+            delta=f"{len(selected_universities)}大学・学部"
         )
     
     with col2:
         st.metric(
             label="平均OCR信頼度",
-            value=f"{summary_stats.get('average_ocr_confidence', 0):.1f}%",
+            value=f"{selected_avg_confidence:.1f}%",
             delta=None
         )
     
@@ -283,41 +307,45 @@ def show_overview_page(data: dict, metadata: dict):
     with col4:
         st.metric(
             label="処理ページ数",
-            value=f"{summary_stats.get('total_pages_processed', 0)}",
+            value=f"{selected_total_pages}",
             delta=None
         )
     
     st.markdown("---")
     
-    # チャート表示
+    # チャート表示（選択された大学のデータのみ）
     col1, col2 = st.columns(2)
     
     with col1:
         st.subheader("📊 単語帳別カバレッジ率・抽出精度")
-        fig_vocab = create_vocabulary_comparison_bar(data)
+        fig_vocab = create_vocabulary_comparison_bar(filtered_data)
         st.plotly_chart(fig_vocab, use_container_width=True)
         st.caption("💡 カバレッジ率が高いほど実用的、抽出精度が高いほど学習効率が良い")
     
     with col2:
         st.subheader("🎯 カバレッジ率 vs 抽出精度")
-        fig_scatter = create_scatter_coverage_precision(data)
+        fig_scatter = create_scatter_coverage_precision(filtered_data)
         st.plotly_chart(fig_scatter, use_container_width=True)
         st.caption("💡 右上にある単語帳ほど理想的（高実用性×高効率性）")
     
-    # ヒートマップ
-    st.subheader("🔥 大学×単語帳 カバレッジ率ヒートマップ")
-    fig_heatmap = create_university_heatmap(data)
-    st.plotly_chart(fig_heatmap, use_container_width=True)
-    st.caption("💡 色が濃い（赤い）ほど高いカバレッジ率。大学ごとの単語帳適合度を一目で比較")
+    # ヒートマップ（選択された大学のみ）
+    if len(selected_universities) > 1:
+        st.subheader("🔥 選択大学×単語帳 カバレッジ率ヒートマップ")
+        fig_heatmap = create_university_heatmap(filtered_data)
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+        st.caption("💡 色が濃い（赤い）ほど高いカバレッジ率。選択した大学間での単語帳適合度を比較")
+    else:
+        st.subheader("📋 選択大学の詳細データ")
+        st.info("複数の大学を選択すると、大学間比較のヒートマップが表示されます。")
     
-    # 文章統計
+    # 文章統計（選択された大学のみ）
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.subheader("📝 大学別文章統計")
+        st.subheader("📝 選択大学の文章統計")
         
-        # 文章統計テーブル作成
-        university_data = data.get('university_analysis', {})
+        # 選択された大学の文章統計テーブル作成
+        university_data = {k: v for k, v in data.get('university_analysis', {}).items() if k in selected_universities}
         sentence_table_data = []
         
         for univ, info in university_data.items():
@@ -361,12 +389,15 @@ def show_overview_page(data: dict, metadata: dict):
         fig_gauge = create_ocr_confidence_gauge(avg_confidence)
         st.plotly_chart(fig_gauge, use_container_width=True)
         
-        # 文章統計サマリー
-        sentence_stats = data.get('sentence_statistics', {})
-        if sentence_stats:
-            st.markdown("### 📊 全体文章統計")
-            st.metric("総文数", f"{sentence_stats.get('total_sentences', 0):,}")
-            st.metric("平均語数/文", f"{sentence_stats.get('overall_avg_words_per_sentence', 0):.1f}語")
+        # 選択大学の文章統計サマリー
+        if university_data:
+            selected_total_sentences = sum([info.get('total_sentences', 0) for info in university_data.values()])
+            selected_total_words_in_sentences = sum([info.get('avg_words_per_sentence', 0) * info.get('total_sentences', 0) for info in university_data.values()])
+            selected_overall_avg = selected_total_words_in_sentences / selected_total_sentences if selected_total_sentences > 0 else 0
+            
+            st.markdown("### 📊 選択大学文章統計")
+            st.metric("総文数", f"{selected_total_sentences:,}")
+            st.metric("平均語数/文", f"{selected_overall_avg:.1f}語")
 
 def show_university_page(data: dict, metadata: dict):
     """大学別詳細ページ"""
