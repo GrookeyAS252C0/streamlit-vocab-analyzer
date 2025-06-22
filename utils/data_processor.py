@@ -38,6 +38,27 @@ def extract_university_name(source_file):
             return "早稲田大学_理工学部"
     elif "東京大学" in filename:
         return "東京大学"
+    elif "慶應義塾大学" in filename:
+        if "医学部" in filename:
+            return "慶應義塾大学_医学部"
+        elif "薬学部" in filename:
+            return "慶應義塾大学_薬学部"
+        elif "経済学部" in filename:
+            return "慶應義塾大学_経済学部"
+        elif "商学部" in filename:
+            return "慶應義塾大学_商学部"
+        elif "法学部" in filename:
+            return "慶應義塾大学_法学部"
+        elif "文学部" in filename:
+            return "慶應義塾大学_文学部"
+        elif "理工学部" in filename:
+            return "慶應義塾大学_理工学部"
+        elif "環境情報学部" in filename:
+            return "慶應義塾大学_環境情報学部"
+        elif "総合政策学部" in filename:
+            return "慶應義塾大学_総合政策学部"
+        elif "看護医療学部" in filename:
+            return "慶應義塾大学_看護医療学部"
     
     return filename
 
