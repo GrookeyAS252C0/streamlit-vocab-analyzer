@@ -78,35 +78,17 @@ def main():
     
     # メインタイトル
     st.markdown('<div class="main-header">📚 大学入試英単語分析ダッシュボード</div>', unsafe_allow_html=True)
+    st.markdown("**フィルターで大学を選択後、各タブで詳細分析をご覧ください**")
     
     # サイドバー
     setup_sidebar(data, metadata)
     
-    # メインコンテンツ
-    if st.session_state.get('page', 'overview') == 'overview':
-        show_overview_page(data, metadata)
-    elif st.session_state.get('page') == 'university':
-        show_university_page(data, metadata)
-    elif st.session_state.get('page') == 'comparison':
-        show_comparison_page(data, metadata)
+    # メインコンテンツ（タブ形式で統合）
+    show_integrated_dashboard(data, metadata)
 
 def setup_sidebar(data: dict, metadata: dict):
     """サイドバーの設定"""
-    st.sidebar.title("📊 ナビゲーション")
-    
-    # ページ選択
-    page = st.sidebar.radio(
-        "ページを選択",
-        ["overview", "university", "comparison"],
-        format_func=lambda x: {
-            "overview": "🏠 概要ダッシュボード",
-            "university": "🏫 大学別詳細",
-            "comparison": "⚖️ 比較分析"
-        }[x]
-    )
-    st.session_state.page = page
-    
-    st.sidebar.markdown("---")
+    st.sidebar.title("📊 フィルター・設定")
     
     # フィルター設定
     st.sidebar.subheader("🔍 フィルター")
@@ -214,9 +196,23 @@ def setup_sidebar(data: dict, metadata: dict):
     st.sidebar.write(f"**単語帳数**: 5種類")
     st.sidebar.write(f"**総単語数**: {overall_summary.get('total_words_extracted', 0):,}")
 
-def show_overview_page(data: dict, metadata: dict):
-    """概要ダッシュボードページ"""
-    st.markdown('<div class="sub-header">🏠 概要ダッシュボード</div>', unsafe_allow_html=True)
+def show_integrated_dashboard(data: dict, metadata: dict):
+    """統合ダッシュボード（タブ形式）"""
+    
+    # メインタブの作成
+    tab1, tab2, tab3 = st.tabs(["🏠 概要分析", "🏫 大学別詳細", "⚖️ 比較分析"])
+    
+    with tab1:
+        show_overview_content(data, metadata)
+    
+    with tab2:
+        show_university_content(data, metadata)
+    
+    with tab3:
+        show_comparison_content(data, metadata)
+
+def show_overview_content(data: dict, metadata: dict):
+    """概要分析タブのコンテンツ"""
     
     # 簡潔な定義（常時表示）
     col1, col2 = st.columns(2)
@@ -417,9 +413,8 @@ def show_overview_page(data: dict, metadata: dict):
             st.metric("総文数", f"{selected_total_sentences:,}")
             st.metric("平均語数/文", f"{selected_overall_avg:.1f}語")
 
-def show_university_page(data: dict, metadata: dict):
-    """大学別詳細ページ"""
-    st.markdown('<div class="sub-header">🏫 大学別詳細分析</div>', unsafe_allow_html=True)
+def show_university_content(data: dict, metadata: dict):
+    """大学別詳細タブのコンテンツ"""
     
     # 簡潔な指標説明
     st.info("""
@@ -541,9 +536,8 @@ def show_university_page(data: dict, metadata: dict):
             fig_precision.update_layout(height=400)
             st.plotly_chart(fig_precision, use_container_width=True)
 
-def show_comparison_page(data: dict, metadata: dict):
-    """比較分析ページ"""
-    st.markdown('<div class="sub-header">⚖️ 比較分析</div>', unsafe_allow_html=True)
+def show_comparison_content(data: dict, metadata: dict):
+    """比較分析タブのコンテンツ"""
     
     # 簡潔な指標説明
     st.info("""
