@@ -248,8 +248,6 @@ def show_overview_page(data: dict, metadata: dict):
         
         st.info("""
         💡 **理想的な単語帳**: 高カバレッジ率 + 高抽出精度 = 効率的な受験対策
-        
-        📊 **現在のデータ**: 3大学（早稲田法学部・政経学部、東京大学）の2024年度入試問題を分析
         """)
     
     st.markdown("---")
