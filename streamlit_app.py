@@ -345,16 +345,16 @@ def show_overview_page(data: dict, metadata: dict):
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("📊 単語帳別カバレッジ率・抽出精度")
+        st.subheader("📊 選択大学の単語帳別カバレッジ率・抽出精度")
         fig_vocab = create_vocabulary_comparison_bar(filtered_data)
         st.plotly_chart(fig_vocab, use_container_width=True)
-        st.caption("💡 カバレッジ率が高いほど実用的、抽出精度が高いほど学習効率が良い")
+        st.caption("💡 選択した大学のデータに基づく統計。カバレッジ率が高いほど実用的、抽出精度が高いほど学習効率が良い")
     
     with col2:
-        st.subheader("🎯 カバレッジ率 vs 抽出精度")
+        st.subheader("🎯 選択大学のカバレッジ率 vs 抽出精度")
         fig_scatter = create_scatter_coverage_precision(filtered_data)
         st.plotly_chart(fig_scatter, use_container_width=True)
-        st.caption("💡 右上にある単語帳ほど理想的（高実用性×高効率性）")
+        st.caption("💡 選択した大学での結果。右上にある単語帳ほど理想的（高実用性×高効率性）")
     
     # ヒートマップ（選択された大学のみ）
     if len(selected_universities) > 1:

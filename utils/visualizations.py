@@ -66,19 +66,69 @@ def create_coverage_radar_chart(data: Dict, universities: List[str]) -> go.Figur
 
 def create_vocabulary_comparison_bar(data: Dict) -> go.Figure:
     """
-    単語帳別カバレッジ率・抽出精度比較棒グラフ
+    選択された大学の単語帳別カバレッジ率・抽出精度比較棒グラフ
     
     Args:
-        data: 分析データ
+        data: 選択された大学のみのフィルタ済み分析データ
         
     Returns:
         Plotly棒グラフ
     """
-    vocab_data = data.get('vocabulary_summary', {})
+    university_analysis = data.get('university_analysis', {})
     
-    vocabularies = list(vocab_data.keys())
-    coverage_rates = [vocab_data[vocab].get('target_coverage_rate', 0) for vocab in vocabularies]
-    precision_rates = [vocab_data[vocab].get('extraction_precision', 0) for vocab in vocabularies]
+    if not university_analysis:
+        # データがない場合の空チャート
+        fig = go.Figure()
+        fig.add_annotation(
+            text="選択された大学がありません",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, xanchor='center', yanchor='middle',
+            showarrow=False, font_size=16
+        )
+        fig.update_layout(title='単語帳別 カバレッジ率・抽出精度比較', height=400)
+        return fig
+    
+    # 選択された大学の語彙データを統合
+    vocab_stats = {}
+    total_words = 0
+    
+    # 重み付き平均の計算
+    for univ_name, univ_data in university_analysis.items():
+        univ_total_words = univ_data.get('total_words', 0)
+        total_words += univ_total_words
+        vocab_coverage = univ_data.get('vocabulary_coverage', {})
+        
+        for vocab_name, vocab_data in vocab_coverage.items():
+            if vocab_name not in vocab_stats:
+                vocab_stats[vocab_name] = {
+                    'weighted_coverage': 0,
+                    'weighted_precision': 0,
+                    'total_matched': 0
+                }
+            
+            coverage_rate = vocab_data.get('target_coverage_rate', 0)
+            precision_rate = vocab_data.get('extraction_precision', 0)
+            matched_count = vocab_data.get('matched_words_count', 0)
+            
+            vocab_stats[vocab_name]['weighted_coverage'] += coverage_rate * univ_total_words
+            vocab_stats[vocab_name]['weighted_precision'] += precision_rate * univ_total_words
+            vocab_stats[vocab_name]['total_matched'] += matched_count
+    
+    # 平均値を計算
+    vocabularies = list(vocab_stats.keys())
+    coverage_rates = []
+    precision_rates = []
+    
+    for vocab_name in vocabularies:
+        if total_words > 0:
+            avg_coverage = vocab_stats[vocab_name]['weighted_coverage'] / total_words
+            avg_precision = vocab_stats[vocab_name]['weighted_precision'] / total_words
+        else:
+            avg_coverage = 0
+            avg_precision = 0
+            
+        coverage_rates.append(round(avg_coverage, 1))
+        precision_rates.append(round(avg_precision, 1))
     
     fig = go.Figure(data=[
         go.Bar(name='カバレッジ率', x=vocabularies, y=coverage_rates, marker_color='#FF6B6B'),
@@ -87,7 +137,7 @@ def create_vocabulary_comparison_bar(data: Dict) -> go.Figure:
     
     fig.update_layout(
         barmode='group',
-        title='単語帳別 カバレッジ率・抽出精度比較',
+        title='選択大学の単語帳別 カバレッジ率・抽出精度比較',
         xaxis_title='単語帳',
         yaxis_title='率 (%)',
         height=400
@@ -153,42 +203,85 @@ def create_university_heatmap(data: Dict) -> go.Figure:
 
 def create_scatter_coverage_precision(data: Dict) -> go.Figure:
     """
-    カバレッジ率 vs 抽出精度の散布図
+    選択された大学の単語帳カバレッジ率 vs 抽出精度の散布図
     
     Args:
-        data: 分析データ
+        data: 選択された大学のみのフィルタ済み分析データ
         
     Returns:
         Plotly散布図
     """
-    vocab_data = data.get('vocabulary_summary', {})
+    university_analysis = data.get('university_analysis', {})
+    
+    if not university_analysis:
+        # データがない場合の空チャート
+        fig = go.Figure()
+        fig.add_annotation(
+            text="選択された大学がありません",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, xanchor='center', yanchor='middle',
+            showarrow=False, font_size=16
+        )
+        fig.update_layout(title='カバレッジ率 vs 抽出精度', height=500)
+        return fig
+    
+    # 選択された大学の語彙データを統合
+    vocab_stats = {}
+    total_words = 0
+    
+    # 重み付き平均の計算
+    for univ_name, univ_data in university_analysis.items():
+        univ_total_words = univ_data.get('total_words', 0)
+        total_words += univ_total_words
+        vocab_coverage = univ_data.get('vocabulary_coverage', {})
+        
+        for vocab_name, vocab_data in vocab_coverage.items():
+            if vocab_name not in vocab_stats:
+                vocab_stats[vocab_name] = {
+                    'weighted_coverage': 0,
+                    'weighted_precision': 0,
+                    'total_matched': 0
+                }
+            
+            coverage_rate = vocab_data.get('target_coverage_rate', 0)
+            precision_rate = vocab_data.get('extraction_precision', 0)
+            matched_count = vocab_data.get('matched_words_count', 0)
+            
+            vocab_stats[vocab_name]['weighted_coverage'] += coverage_rate * univ_total_words
+            vocab_stats[vocab_name]['weighted_precision'] += precision_rate * univ_total_words
+            vocab_stats[vocab_name]['total_matched'] += matched_count
     
     fig = go.Figure()
     
-    for vocab_name, vocab_info in vocab_data.items():
-        coverage = vocab_info.get('target_coverage_rate', 0)
-        precision = vocab_info.get('extraction_precision', 0)
-        matched_words = vocab_info.get('matched_words_count', 0)
+    for vocab_name, stats in vocab_stats.items():
+        if total_words > 0:
+            avg_coverage = stats['weighted_coverage'] / total_words
+            avg_precision = stats['weighted_precision'] / total_words
+        else:
+            avg_coverage = 0
+            avg_precision = 0
+            
+        matched_words = stats['total_matched']
         
         fig.add_trace(go.Scatter(
-            x=[coverage],
-            y=[precision],
+            x=[avg_coverage],
+            y=[avg_precision],
             mode='markers+text',
             text=[vocab_name],
             textposition="top center",
             marker=dict(
-                size=matched_words/10,  # サイズは一致語数に比例
+                size=max(10, matched_words/20),  # サイズは一致語数に比例
                 opacity=0.7
             ),
             name=vocab_name,
             hovertemplate=f"<b>{vocab_name}</b><br>" +
-                         f"カバレッジ率: {coverage:.1f}%<br>" +
-                         f"抽出精度: {precision:.1f}%<br>" +
+                         f"カバレッジ率: {avg_coverage:.1f}%<br>" +
+                         f"抽出精度: {avg_precision:.1f}%<br>" +
                          f"一致語数: {matched_words}<extra></extra>"
         ))
     
     fig.update_layout(
-        title='単語帳 カバレッジ率 vs 抽出精度',
+        title='選択大学の単語帳 カバレッジ率 vs 抽出精度',
         xaxis_title='カバレッジ率 (%)',
         yaxis_title='抽出精度 (%)',
         showlegend=False,
