@@ -128,7 +128,7 @@ def setup_sidebar(data: dict, metadata: dict):
     display_mode = st.sidebar.radio(
         "選択モード",
         ["大学レベル（統合）", "学部レベル（詳細）", "混合選択"],
-        help="大学レベル：全学部統合データ、学部レベル：学部別データ、混合：両方を自由選択"
+        help="大学レベル：統合データ+単一大学、学部レベル：学部別データ、混合：全て自由選択"
     )
     
     # 大学選択
@@ -140,11 +140,18 @@ def setup_sidebar(data: dict, metadata: dict):
     
     # 選択モードに応じて選択肢をフィルタリング
     if display_mode == "大学レベル（統合）":
-        # 統合データのみ表示
-        universities = [univ for univ in all_universities if "（全学部）" in univ]
-        help_text = "各大学の全学部を統合したデータで比較"
+        # 統合データ + 単一大学データ（学部が複数ない大学）を表示
+        universities = []
+        for univ in all_universities:
+            if "（全学部）" in univ:
+                # 統合データは含める
+                universities.append(univ)
+            elif "_" not in univ:
+                # 学部が分かれていない単一大学（東京大学など）も含める
+                universities.append(univ)
+        help_text = "大学レベルでの比較（統合データ + 単一大学）"
     elif display_mode == "学部レベル（詳細）":
-        # 学部別データのみ表示
+        # 学部別データのみ表示（統合データは除外）
         universities = [univ for univ in all_universities if "（全学部）" not in univ]
         help_text = "学部別の詳細データで比較"
     else:  # 混合選択
@@ -158,7 +165,8 @@ def setup_sidebar(data: dict, metadata: dict):
         universities = [univ for univ in universities if univ in filter_universities_by_criteria(data, min_coverage)]
     
     # デバッグ情報表示
-    st.sidebar.write(f"利用可能: {len(universities)} | 全体: {len(all_universities)}")
+    mode_label = {"大学レベル（統合）": "大学", "学部レベル（詳細）": "学部", "混合選択": "全て"}[display_mode]
+    st.sidebar.write(f"{mode_label}: {len(universities)} | 全体: {len(all_universities)}")
     if min_coverage > 0:
         st.sidebar.write(f"フィルター条件: カバレッジ率 ≥ {min_coverage}%")
     
