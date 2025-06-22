@@ -247,9 +247,17 @@ def create_streamlit_data():
         source_file = item.get("source_file", "")
         university_name = extract_university_name(source_file)
         
-        # 文章統計を計算
-        english_passages = item.get("english_passages", [])
-        sentence_stats = calculate_sentence_stats(english_passages)
+        # 文章統計を取得または計算
+        if "total_sentences" in item and "avg_words_per_sentence" in item:
+            # 既に計算済みの場合はそれを使用
+            sentence_stats = {
+                "total_sentences": item.get("total_sentences", 0),
+                "avg_words_per_sentence": item.get("avg_words_per_sentence", 0.0)
+            }
+        else:
+            # 未計算の場合は新たに計算
+            english_passages = item.get("english_passages", []) or item.get("pure_english_text", [])
+            sentence_stats = calculate_sentence_stats(english_passages)
         
         # OCRデータ
         ocr_info = {
