@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-06-22T09:38:29.751710",
+    "generated_at": "2025-06-22T11:14:14.663212",
     "source_files": [
       "extraction_results_pure_english.json",
       "multi_vocabulary_analysis_report.json"
@@ -11,7 +11,7 @@
     "total_source_files": 11,
     "total_words_extracted": 10659,
     "average_ocr_confidence": 96.33,
-    "analysis_timestamp": "2025-06-22T09:38:29.751723",
+    "analysis_timestamp": "2025-06-22T11:14:14.663242",
     "vocabulary_books": [
       "Target 1900",
       "Target 1400",
