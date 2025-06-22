@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-06-23T05:35:43.514272",
+    "generated_at": "2025-06-23T06:58:04.566292",
     "source_files": [
       "extraction_results_pure_english.json",
       "multi_vocabulary_analysis_report.json"
@@ -9,9 +9,9 @@
   },
   "overall_summary": {
     "total_source_files": 21,
-    "total_words_extracted": 0,
-    "average_ocr_confidence": 0.0,
-    "analysis_timestamp": "2025-06-23T05:35:43.514288",
+    "total_words_extracted": 63566,
+    "average_ocr_confidence": 0,
+    "analysis_timestamp": "2025-06-23T06:58:04.566317",
     "vocabulary_books": [
       "Target 1900",
       "Target 1400",
@@ -33997,12 +33997,12 @@
   "university_analysis": {
     "慶應義塾大学_薬学部": {
       "source_file": "慶應義塾大学_2024年度_英語_薬学部.pdf",
-      "total_words": 0,
+      "total_words": 2329,
       "unique_words": 700,
       "ocr_confidence": 0,
       "pages_processed": 6,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 104,
+      "avg_words_per_sentence": 22.4,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -35121,12 +35121,12 @@
     },
     "慶應義塾大学_経済学部": {
       "source_file": "慶應義塾大学_2024年度_英語_経済学部.pdf",
-      "total_words": 0,
+      "total_words": 2704,
       "unique_words": 850,
       "ocr_confidence": 0,
       "pages_processed": 8,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 147,
+      "avg_words_per_sentence": 18.4,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -36245,12 +36245,12 @@
     },
     "慶應義塾大学_環境情報学部": {
       "source_file": "慶應義塾大学_2024年度_英語_環境情報学部.pdf",
-      "total_words": 0,
+      "total_words": 2992,
       "unique_words": 931,
       "ocr_confidence": 0,
       "pages_processed": 8,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 175,
+      "avg_words_per_sentence": 17.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -37369,12 +37369,12 @@
     },
     "慶應義塾大学_商学部": {
       "source_file": "慶應義塾大学_2024年度_英語_商学部.pdf",
-      "total_words": 0,
+      "total_words": 4144,
       "unique_words": 1107,
       "ocr_confidence": 0,
       "pages_processed": 10,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 217,
+      "avg_words_per_sentence": 19.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -38493,12 +38493,12 @@
     },
     "慶應義塾大学_総合政策学部": {
       "source_file": "慶應義塾大学_2024年度_英語_総合政策学部.pdf",
-      "total_words": 0,
+      "total_words": 3307,
       "unique_words": 1011,
       "ocr_confidence": 0,
       "pages_processed": 8,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 189,
+      "avg_words_per_sentence": 17.5,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -39617,12 +39617,12 @@
     },
     "早稲田大学_文化構想学部": {
       "source_file": "早稲田大学_2024年度_英語_文化構想学部.pdf",
-      "total_words": 0,
+      "total_words": 2696,
       "unique_words": 914,
       "ocr_confidence": 0,
       "pages_processed": 6,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 126,
+      "avg_words_per_sentence": 21.4,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -41157,12 +41157,12 @@
     },
     "慶應義塾大学_法学部": {
       "source_file": "慶應義塾大学_2024年度_英語_法学部.pdf",
-      "total_words": 0,
+      "total_words": 2650,
       "unique_words": 759,
       "ocr_confidence": 0,
       "pages_processed": 7,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 155,
+      "avg_words_per_sentence": 17.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -42281,12 +42281,12 @@
     },
     "早稲田大学_文学部": {
       "source_file": "早稲田大学_2024年度_英語_文学部.pdf",
-      "total_words": 0,
+      "total_words": 2189,
       "unique_words": 759,
       "ocr_confidence": 0,
       "pages_processed": 5,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 119,
+      "avg_words_per_sentence": 18.4,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -43472,12 +43472,12 @@
     },
     "早稲田大学_社会科学部": {
       "source_file": "早稲田大学_2024年度_英語_社会科学部.pdf",
-      "total_words": 0,
+      "total_words": 4464,
       "unique_words": 1252,
       "ocr_confidence": 0,
       "pages_processed": 10,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 248,
+      "avg_words_per_sentence": 18.0,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -45012,12 +45012,12 @@
     },
     "慶應義塾大学_文学部": {
       "source_file": "慶應義塾大学_2024年度_英語_文学部.pdf",
-      "total_words": 0,
+      "total_words": 2150,
       "unique_words": 623,
       "ocr_confidence": 0,
       "pages_processed": 4,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 100,
+      "avg_words_per_sentence": 21.5,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -46136,12 +46136,12 @@
     },
     "慶應義塾大学_看護医療学部": {
       "source_file": "慶應義塾大学_2024年度_英語_看護医療学部.pdf",
-      "total_words": 0,
+      "total_words": 1497,
       "unique_words": 526,
       "ocr_confidence": 0,
       "pages_processed": 6,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 93,
+      "avg_words_per_sentence": 16.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -47260,12 +47260,12 @@
     },
     "早稲田大学_法学部": {
       "source_file": "早稲田大学_2024年度_英語_法学部.pdf",
-      "total_words": 0,
+      "total_words": 2525,
       "unique_words": 821,
       "ocr_confidence": 0,
       "pages_processed": 8,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 125,
+      "avg_words_per_sentence": 20.2,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -48543,12 +48543,12 @@
     },
     "慶應義塾大学_理工学部": {
       "source_file": "慶應義塾大学_2024年度_英語_理工学部.pdf",
-      "total_words": 0,
+      "total_words": 2013,
       "unique_words": 598,
       "ocr_confidence": 0,
       "pages_processed": 6,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 122,
+      "avg_words_per_sentence": 16.5,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -49667,12 +49667,12 @@
     },
     "早稲田大学_商学部": {
       "source_file": "早稲田大学_2024年度_英語_商学部.pdf",
-      "total_words": 0,
+      "total_words": 4379,
       "unique_words": 1236,
       "ocr_confidence": 0,
       "pages_processed": 10,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 272,
+      "avg_words_per_sentence": 16.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -51488,12 +51488,12 @@
     },
     "早稲田大学_人間科学部": {
       "source_file": "早稲田大学_2024年度_英語_人間科学部.pdf",
-      "total_words": 0,
+      "total_words": 2492,
       "unique_words": 836,
       "ocr_confidence": 0,
       "pages_processed": 6,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 124,
+      "avg_words_per_sentence": 20.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -53028,12 +53028,12 @@
     },
     "早稲田大学_政治経済学部": {
       "source_file": "早稲田大学_2024年度_英語_政治経済学部.pdf",
-      "total_words": 0,
+      "total_words": 2991,
       "unique_words": 715,
       "ocr_confidence": 0,
       "pages_processed": 8,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 169,
+      "avg_words_per_sentence": 17.7,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -54213,12 +54213,12 @@
     },
     "早稲田大学_国際教養学部": {
       "source_file": "早稲田大学_2024年度_英語_国際教養学部.pdf",
-      "total_words": 0,
+      "total_words": 4462,
       "unique_words": 1307,
       "ocr_confidence": 0,
       "pages_processed": 11,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 222,
+      "avg_words_per_sentence": 20.1,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -55753,12 +55753,12 @@
     },
     "早稲田大学_教育学部": {
       "source_file": "早稲田大学_2024年度_英語_教育学部.pdf",
-      "total_words": 0,
+      "total_words": 5289,
       "unique_words": 1133,
       "ocr_confidence": 0,
       "pages_processed": 13,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 246,
+      "avg_words_per_sentence": 21.5,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -57293,12 +57293,12 @@
     },
     "東京大学": {
       "source_file": "東京大学_2024年度_英語.pdf",
-      "total_words": 0,
+      "total_words": 2832,
       "unique_words": 816,
       "ocr_confidence": 0,
       "pages_processed": 6,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 146,
+      "avg_words_per_sentence": 19.4,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -58425,12 +58425,12 @@
     },
     "慶應義塾大学_医学部": {
       "source_file": "慶應義塾大学_2024年度_英語_医学部.pdf",
-      "total_words": 0,
+      "total_words": 2300,
       "unique_words": 744,
       "ocr_confidence": 0,
       "pages_processed": 5,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 123,
+      "avg_words_per_sentence": 18.7,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -59549,12 +59549,12 @@
     },
     "早稲田大学_理工学部": {
       "source_file": "早稲田大学_2024年度_英語_基幹理工学部・創造理工学部・先進理工学部.pdf",
-      "total_words": 0,
+      "total_words": 3161,
       "unique_words": 879,
       "ocr_confidence": 0,
       "pages_processed": 11,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0.0,
+      "total_sentences": 145,
+      "avg_words_per_sentence": 21.8,
       "vocabulary_coverage": {
         "Target 1900": {
           "target_total_words": 1897,
@@ -60988,37 +60988,37 @@
     },
     "慶應義塾大学（全学部）": {
       "source_file": "慶應義塾大学_統合データ",
-      "total_words": 0,
+      "total_words": 26086,
       "unique_words": 7849,
       "ocr_confidence": 0.0,
       "pages_processed": 68,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0,
+      "total_sentences": 1425,
+      "avg_words_per_sentence": 18.3,
       "vocabulary_coverage": {
         "Target 1900": {
           "matched_words_count": 1750,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 9.23,
+          "extraction_precision": 25.58
         },
         "Target 1400": {
           "matched_words_count": 2160,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 15.45,
+          "extraction_precision": 31.58
         },
         "システム英単語": {
           "matched_words_count": 1970,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 9.74,
+          "extraction_precision": 28.8
         },
         "LEAP": {
           "matched_words_count": 2350,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 12.17,
+          "extraction_precision": 34.36
         },
         "鉄壁": {
           "matched_words_count": 1900,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 8.76,
+          "extraction_precision": 27.78
         }
       },
       "is_consolidated": true,
@@ -61038,37 +61038,37 @@
     },
     "早稲田大学（全学部）": {
       "source_file": "早稲田大学_統合データ",
-      "total_words": 0,
+      "total_words": 34648,
       "unique_words": 9852,
       "ocr_confidence": 0.0,
       "pages_processed": 88,
-      "total_sentences": 0,
-      "avg_words_per_sentence": 0,
+      "total_sentences": 1796,
+      "avg_words_per_sentence": 19.3,
       "vocabulary_coverage": {
         "Target 1900": {
           "matched_words_count": 2465,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 13.35,
+          "extraction_precision": 26.63
         },
         "Target 1400": {
           "matched_words_count": 2800,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 20.57,
+          "extraction_precision": 30.27
         },
         "システム英単語": {
           "matched_words_count": 2531,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 12.81,
+          "extraction_precision": 27.36
         },
         "LEAP": {
           "matched_words_count": 2997,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 15.88,
+          "extraction_precision": 32.39
         },
         "鉄壁": {
           "matched_words_count": 2716,
-          "target_coverage_rate": 0,
-          "extraction_precision": 0
+          "target_coverage_rate": 12.79,
+          "extraction_precision": 29.35
         }
       },
       "is_consolidated": true,
@@ -61088,7 +61088,7 @@
     }
   },
   "sentence_statistics": {
-    "total_sentences": 0,
-    "overall_avg_words_per_sentence": 0
+    "total_sentences": 3367,
+    "overall_avg_words_per_sentence": 18.9
   }
 }

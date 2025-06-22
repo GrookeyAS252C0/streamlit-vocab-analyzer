@@ -221,12 +221,33 @@ def create_streamlit_data():
         }
     }
     
-    # overall_summary作成
+    # overall_summary作成（実際の集計データから計算）
     extraction_summary = extraction_data.get("extraction_summary", {})
+    
+    # 実データから統計を計算
+    extracted_data = extraction_data.get("extracted_data", [])
+    
+    # 各アイテムから単語数を計算
+    total_words_calculated = 0
+    for item in extracted_data:
+        extracted_words_count = len(item.get("extracted_words", []))
+        # 文章統計がある場合はそれも考慮
+        if "total_sentences" in item and "avg_words_per_sentence" in item:
+            sentence_word_count = int(item.get("total_sentences", 0) * item.get("avg_words_per_sentence", 0))
+            total_words_calculated += max(extracted_words_count, sentence_word_count)
+        else:
+            total_words_calculated += extracted_words_count
+    
+    total_files = len(extracted_data)
+    
+    # OCR信頼度の計算（0でない値のみ）
+    ocr_confidences = [item.get("ocr_confidence", 0) for item in extracted_data if item.get("ocr_confidence", 0) > 0]
+    avg_ocr_confidence = sum(ocr_confidences) / len(ocr_confidences) if ocr_confidences else 0
+    
     streamlit_data["overall_summary"] = {
-        "total_source_files": extraction_summary.get("total_source_files", 0),
-        "total_words_extracted": extraction_summary.get("total_words_extracted", 0),
-        "average_ocr_confidence": round(extraction_summary.get("average_ocr_confidence", 0) * 100, 2),
+        "total_source_files": total_files,
+        "total_words_extracted": total_words_calculated,
+        "average_ocr_confidence": round(avg_ocr_confidence * 100, 2) if avg_ocr_confidence < 1 else round(avg_ocr_confidence, 2),
         "analysis_timestamp": datetime.now().isoformat(),
         "vocabulary_books": ["Target 1900", "Target 1400", "システム英単語", "LEAP", "鉄壁"]
     }
@@ -259,11 +280,16 @@ def create_streamlit_data():
             english_passages = item.get("english_passages", []) or item.get("pure_english_text", [])
             sentence_stats = calculate_sentence_stats(english_passages)
         
+        # 単語数の計算（extracted_wordsの数とavg_words_per_sentence * total_sentencesの最大値を使用）
+        extracted_words_count = len(item.get("extracted_words", []))
+        sentence_word_count = int(sentence_stats["total_sentences"] * sentence_stats["avg_words_per_sentence"])
+        total_words = max(extracted_words_count, sentence_word_count)
+        
         # OCRデータ
         ocr_info = {
             "source_file": source_file,
-            "total_words": item.get("word_count", 0),
-            "unique_words": len(item.get("extracted_words", [])),
+            "total_words": total_words,
+            "unique_words": extracted_words_count,
             "ocr_confidence": round(item.get("ocr_confidence", 0) * 100, 2),
             "pages_processed": item.get("pages_processed", 0),
             "total_sentences": sentence_stats["total_sentences"],
@@ -322,7 +348,7 @@ def create_streamlit_data():
     }
     
     # データ保存
-    output_file = "../data/analysis_data.json"
+    output_file = "data/analysis_data.json"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     try:
