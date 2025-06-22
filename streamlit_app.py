@@ -19,7 +19,6 @@ from utils.data_loader import (
     load_analysis_data, 
     load_university_metadata,
     get_university_list,
-    get_vocabulary_list,
     create_university_dataframe,
     create_vocabulary_dataframe,
     calculate_summary_stats
@@ -178,15 +177,6 @@ def setup_sidebar(data: dict, metadata: dict):
     )
     st.session_state.selected_universities = selected_universities
     
-    # 単語帳選択
-    vocabularies = get_vocabulary_list(data)
-    selected_vocabularies = st.sidebar.multiselect(
-        "単語帳を選択",
-        vocabularies,
-        default=vocabularies
-    )
-    st.session_state.selected_vocabularies = selected_vocabularies
-    
     st.sidebar.markdown("---")
     
     # 簡潔な指標説明
@@ -221,7 +211,7 @@ def setup_sidebar(data: dict, metadata: dict):
     overall_summary = data.get('overall_summary', {})
     st.sidebar.write(f"**分析日時**: {overall_summary.get('analysis_timestamp', 'N/A')[:10]}")
     st.sidebar.write(f"**大学数**: {len(universities)}")
-    st.sidebar.write(f"**単語帳数**: {len(vocabularies)}")
+    st.sidebar.write(f"**単語帳数**: 5種類")
     st.sidebar.write(f"**総単語数**: {overall_summary.get('total_words_extracted', 0):,}")
 
 def show_overview_page(data: dict, metadata: dict):
