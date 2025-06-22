@@ -418,26 +418,27 @@ def show_university_content(data: dict, metadata: dict):
     
     # 簡潔な指標説明
     st.info("""
-    💡 **カバレッジ率**: 単語帳の何%が入試に出現 | **抽出精度**: 学習した語彙の何%が入試に出現 | 詳細は概要ページで確認
+    💡 **カバレッジ率**: 単語帳の何%が入試に出現 | **抽出精度**: 学習した語彙の何%が入試に出現 | 詳細は概要タブで確認
     """)
     
-    # 大学選択
-    universities = get_university_list(data)
+    # サイドバーで選択された大学を取得
+    selected_universities = st.session_state.get('selected_universities', [])
     
-    # デバッグ情報表示
-    st.write(f"デバッグ: 利用可能な大学数 = {len(universities)}")
-    if universities:
-        st.write("利用可能な大学例:", universities[:3])
-    
-    if not universities:
-        st.error("大学データが見つかりません。データファイルを確認してください。")
+    if not selected_universities:
+        st.info("""
+        👈 **左のサイドバーから大学・学部を選択してください**
+        
+        選択した大学・学部の詳細分析が表示されます。
+        
+        - 1つの大学を選択すると、その大学の詳細情報を表示
+        - 複数選択時は最初の大学の詳細を表示
+        """)
         return
     
-    selected_university = st.selectbox("詳細を表示する大学・学部を選択", universities)
-    
-    if not selected_university:
-        st.warning("大学を選択してください。")
-        return
+    # 最初に選択された大学の詳細を表示
+    selected_university = selected_universities[0]
+    if len(selected_universities) > 1:
+        st.info(f"複数選択されています。{selected_university} の詳細を表示中（他 {len(selected_universities)-1} 大学）")
     
     university_data = data.get('university_analysis', {}).get(selected_university, {})
     university_meta = metadata.get('universities', {}).get(selected_university, {})
@@ -544,22 +545,28 @@ def show_comparison_content(data: dict, metadata: dict):
     📊 **カバレッジ率**: 単語帳の実用性（高いほど入試頻出語を多く含む） | **抽出精度**: 学習効率性（高いほど学習効果大）
     """)
     
-    # 比較対象選択
-    universities = get_university_list(data)
+    # サイドバーで選択された大学を取得
+    selected_universities = st.session_state.get('selected_universities', [])
     
-    # デバッグ情報
-    st.write(f"デバッグ: 利用可能な大学数 = {len(universities)}")
-    if universities:
-        st.write("利用可能な大学:", universities[:5])  # 最初の5つを表示
-    
-    selected_universities = st.multiselect(
-        "比較する大学・学部を選択（2つ以上）",
-        universities,
-        default=universities[:3] if len(universities) >= 3 else universities
-    )
+    if not selected_universities:
+        st.info("""
+        👈 **左のサイドバーから大学・学部を選択してください**
+        
+        選択した大学・学部の比較分析が表示されます。
+        
+        - 2つ以上の大学を選択すると比較チャートが表示されます
+        - 1つの場合は個別分析を表示
+        """)
+        return
     
     if len(selected_universities) < 2:
-        st.warning("比較には2つ以上の大学を選択してください。")
+        st.warning(f"""
+        **比較分析には2つ以上の大学が必要です**
+        
+        現在選択: {len(selected_universities)}大学（{', '.join(selected_universities)}）
+        
+        👈 左のサイドバーで追加の大学を選択してください。
+        """)
         return
     
     # 比較分析タブ
