@@ -123,30 +123,50 @@ def setup_sidebar(data: dict, metadata: dict):
     )
     st.session_state.min_coverage = min_coverage
     
+    # 階層フィルター設定
+    st.sidebar.subheader("📊 表示レベル")
+    display_mode = st.sidebar.radio(
+        "選択モード",
+        ["大学レベル（統合）", "学部レベル（詳細）", "混合選択"],
+        help="大学レベル：全学部統合データ、学部レベル：学部別データ、混合：両方を自由選択"
+    )
+    
     # 大学選択
     all_universities = get_university_list(data)
     if not all_universities:
         st.sidebar.error("大学データが見つかりません")
         st.sidebar.write("デバッグ情報:", list(data.keys()))
+        return
     
-    # フィルタリングを適用（ただし、閾値が0の場合はすべて表示）
+    # 選択モードに応じて選択肢をフィルタリング
+    if display_mode == "大学レベル（統合）":
+        # 統合データのみ表示
+        universities = [univ for univ in all_universities if "（全学部）" in univ]
+        help_text = "各大学の全学部を統合したデータで比較"
+    elif display_mode == "学部レベル（詳細）":
+        # 学部別データのみ表示
+        universities = [univ for univ in all_universities if "（全学部）" not in univ]
+        help_text = "学部別の詳細データで比較"
+    else:  # 混合選択
+        # 全てのデータを表示
+        universities = all_universities
+        help_text = "大学統合データと学部別データを自由に組み合わせて比較"
+    
+    # カバレッジ率フィルタリングを適用
     if min_coverage > 0:
         from utils.data_loader import filter_universities_by_criteria
-        universities = filter_universities_by_criteria(data, min_coverage)
-    else:
-        universities = all_universities
+        universities = [univ for univ in universities if univ in filter_universities_by_criteria(data, min_coverage)]
     
     # デバッグ情報表示
-    st.sidebar.write(f"全大学数: {len(all_universities)} | フィルター後: {len(universities)}")
+    st.sidebar.write(f"利用可能: {len(universities)} | 全体: {len(all_universities)}")
     if min_coverage > 0:
         st.sidebar.write(f"フィルター条件: カバレッジ率 ≥ {min_coverage}%")
-    else:
-        st.sidebar.write("フィルター: なし（全大学表示）")
     
     selected_universities = st.sidebar.multiselect(
-        "大学・学部を選択",
+        "🏫 大学・学部を選択",
         universities,
-        default=[]  # 最初は何も選択しない
+        default=[],
+        help=help_text
     )
     st.session_state.selected_universities = selected_universities
     

@@ -69,6 +69,89 @@ def calculate_sentence_stats(english_passages):
         "total_words_in_sentences": total_words
     }
 
+def create_university_consolidated_data(university_analysis):
+    """大学統合データを生成（学部データを統合）"""
+    consolidated = {}
+    
+    # 大学ごとにグループ化
+    university_groups = {}
+    for univ_name, univ_data in university_analysis.items():
+        if "_" in univ_name:
+            base_univ = univ_name.split("_")[0]
+        else:
+            base_univ = univ_name
+        
+        if base_univ not in university_groups:
+            university_groups[base_univ] = []
+        university_groups[base_univ].append((univ_name, univ_data))
+    
+    # 複数学部がある大学のみ統合データを作成
+    for base_univ, departments in university_groups.items():
+        if len(departments) > 1:  # 複数学部がある場合のみ
+            print(f"🔄 {base_univ}の統合データを作成中... ({len(departments)}学部)")
+            
+            # 基本統計の合算
+            total_words = sum([data.get("total_words", 0) for _, data in departments])
+            total_unique_words = sum([data.get("unique_words", 0) for _, data in departments])
+            total_pages = sum([data.get("pages_processed", 0) for _, data in departments])
+            total_sentences = sum([data.get("total_sentences", 0) for _, data in departments])
+            
+            # 平均値の計算
+            avg_confidence = sum([data.get("ocr_confidence", 0) for _, data in departments]) / len(departments)
+            total_words_in_sentences = sum([data.get("avg_words_per_sentence", 0) * data.get("total_sentences", 0) for _, data in departments])
+            avg_words_per_sentence = total_words_in_sentences / total_sentences if total_sentences > 0 else 0
+            
+            # 語彙カバレッジの統合（重み付き平均）
+            vocabulary_coverage = {}
+            for vocab_name in ["Target 1900", "Target 1400", "システム英単語", "LEAP", "鉄壁"]:
+                total_matched = 0
+                weighted_coverage = 0
+                weighted_precision = 0
+                total_weight = 0
+                
+                for _, data in departments:
+                    dept_coverage = data.get("vocabulary_coverage", {}).get(vocab_name, {})
+                    matched_count = dept_coverage.get("matched_words_count", 0)
+                    coverage_rate = dept_coverage.get("target_coverage_rate", 0)
+                    precision = dept_coverage.get("extraction_precision", 0)
+                    dept_words = data.get("total_words", 0)
+                    
+                    total_matched += matched_count
+                    if dept_words > 0:
+                        weighted_coverage += coverage_rate * dept_words
+                        weighted_precision += precision * dept_words
+                        total_weight += dept_words
+                
+                # 重み付き平均を計算
+                avg_coverage = weighted_coverage / total_weight if total_weight > 0 else 0
+                avg_precision = weighted_precision / total_weight if total_weight > 0 else 0
+                
+                vocabulary_coverage[vocab_name] = {
+                    "matched_words_count": total_matched,
+                    "target_coverage_rate": round(avg_coverage, 2),
+                    "extraction_precision": round(avg_precision, 2)
+                }
+            
+            # 統合データを作成
+            consolidated_key = f"{base_univ}（全学部）"
+            consolidated[consolidated_key] = {
+                "source_file": f"{base_univ}_統合データ",
+                "total_words": total_words,
+                "unique_words": total_unique_words,
+                "ocr_confidence": round(avg_confidence, 2),
+                "pages_processed": total_pages,
+                "total_sentences": total_sentences,
+                "avg_words_per_sentence": round(avg_words_per_sentence, 1),
+                "vocabulary_coverage": vocabulary_coverage,
+                "is_consolidated": True,  # 統合データフラグ
+                "department_count": len(departments),
+                "departments": [name for name, _ in departments]
+            }
+            
+            print(f"✅ {consolidated_key}: {len(departments)}学部統合完了")
+    
+    return consolidated
+
 def load_extraction_results():
     """OCR抽出結果の読み込み"""
     extraction_file = "/Users/takashikemmoku/Desktop/wordsearch/extraction_results_pure_english.json"
@@ -188,9 +271,18 @@ def create_streamlit_data():
         
         university_analysis[university_name] = ocr_info
     
-    streamlit_data["university_analysis"] = university_analysis
+    # 大学統合データを生成
+    university_consolidated = create_university_consolidated_data(university_analysis)
+    print(f"🔍 統合データ生成結果: {len(university_consolidated)}件")
+    for key in university_consolidated.keys():
+        print(f"  - {key}")
     
-    # 全体の文章統計を計算
+    # 学部別データと統合データを結合
+    combined_analysis = {**university_analysis, **university_consolidated}
+    print(f"🔍 結合後データ: 学部{len(university_analysis)} + 統合{len(university_consolidated)} = 総計{len(combined_analysis)}")
+    streamlit_data["university_analysis"] = combined_analysis
+    
+    # 全体の文章統計を計算（学部別データのみを使用）
     total_sentences = sum([info.get("total_sentences", 0) for info in university_analysis.values()])
     total_words_in_sentences = sum([info.get("avg_words_per_sentence", 0) * info.get("total_sentences", 0) for info in university_analysis.values()])
     overall_avg_words = total_words_in_sentences / total_sentences if total_sentences > 0 else 0
@@ -209,18 +301,29 @@ def create_streamlit_data():
             json.dump(streamlit_data, f, ensure_ascii=False, indent=2)
         
         print(f"✅ Streamlit用データ生成完了: {output_file}")
-        print(f"📊 大学数: {len(university_analysis)}")
+        print(f"📊 学部別データ: {len(university_analysis)}")
+        print(f"🏫 統合データ: {len(university_consolidated)}")
+        print(f"📊 総エントリ数: {len(combined_analysis)}")
         print(f"📚 単語帳数: {len(streamlit_data['vocabulary_summary'])}")
         print(f"📈 総単語数: {streamlit_data['overall_summary']['total_words_extracted']:,}")
         print(f"📝 総文数: {streamlit_data['sentence_statistics']['total_sentences']:,}")
         print(f"📖 平均語数/文: {streamlit_data['sentence_statistics']['overall_avg_words_per_sentence']:.1f}")
         
-        # 大学リスト表示
-        print("\n🏫 含まれる大学・学部:")
+        # 学部別データ表示
+        print("\n🏫 学部別データ:")
         for i, univ in enumerate(university_analysis.keys(), 1):
             sentences = university_analysis[univ].get('total_sentences', 0)
             avg_words = university_analysis[univ].get('avg_words_per_sentence', 0)
             print(f"  {i}. {univ}: {sentences}文, {avg_words:.1f}語/文")
+        
+        # 統合データ表示
+        if university_consolidated:
+            print("\n🏛️ 大学統合データ:")
+            for i, (univ, data) in enumerate(university_consolidated.items(), 1):
+                sentences = data.get('total_sentences', 0)
+                avg_words = data.get('avg_words_per_sentence', 0)
+                dept_count = data.get('department_count', 0)
+                print(f"  {i}. {univ}: {sentences}文, {avg_words:.1f}語/文 ({dept_count}学部統合)")
         
         return True
         
