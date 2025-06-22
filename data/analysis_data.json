@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-06-22T11:24:21.795432",
+    "generated_at": "2025-06-22T11:58:10.286649",
     "source_files": [
       "extraction_results_pure_english.json",
       "multi_vocabulary_analysis_report.json"
@@ -29321,7 +29321,9 @@
             "receive": 2
           }
         }
-      }
+      },
+      "total_sentences": 126,
+      "avg_words_per_sentence": 21.5
     },
     "早稲田大学_文学部": {
       "source_file": "早稲田大学_2024年度_英語_文学部.pdf",
@@ -30510,7 +30512,9 @@
             "consider": 2
           }
         }
-      }
+      },
+      "total_sentences": 119,
+      "avg_words_per_sentence": 18.4
     },
     "早稲田大学_社会科学部": {
       "source_file": "早稲田大学_2024年度_英語_社会科学部.pdf",
@@ -32052,7 +32056,9 @@
             "receive": 2
           }
         }
-      }
+      },
+      "total_sentences": 248,
+      "avg_words_per_sentence": 18.0
     },
     "早稲田大学_法学部": {
       "source_file": "早稲田大学_2024年度_英語_法学部.pdf",
@@ -33333,7 +33339,9 @@
             "submit": 2
           }
         }
-      }
+      },
+      "total_sentences": 125,
+      "avg_words_per_sentence": 20.2
     },
     "早稲田大学_商学部": {
       "source_file": "早稲田大学_2024年度_英語_商学部.pdf",
@@ -35152,7 +35160,9 @@
             "boost": 2
           }
         }
-      }
+      },
+      "total_sentences": 272,
+      "avg_words_per_sentence": 16.1
     },
     "早稲田大学_人間科学部": {
       "source_file": "早稲田大学_2024年度_英語_人間科学部.pdf",
@@ -36694,7 +36704,9 @@
             "receive": 2
           }
         }
-      }
+      },
+      "total_sentences": 124,
+      "avg_words_per_sentence": 20.1
     },
     "早稲田大学_政治経済学部": {
       "source_file": "早稲田大学_2024年度_英語_政治経済学部.pdf",
@@ -37877,7 +37889,9 @@
             "refer": 2
           }
         }
-      }
+      },
+      "total_sentences": 169,
+      "avg_words_per_sentence": 17.7
     },
     "早稲田大学_国際教養学部": {
       "source_file": "早稲田大学_2024年度_英語_国際教養学部.pdf",
@@ -39419,7 +39433,9 @@
             "receive": 2
           }
         }
-      }
+      },
+      "total_sentences": 221,
+      "avg_words_per_sentence": 20.1
     },
     "早稲田大学_教育学部": {
       "source_file": "早稲田大学_2024年度_英語_教育学部.pdf",
@@ -40961,7 +40977,9 @@
             "receive": 2
           }
         }
-      }
+      },
+      "total_sentences": 243,
+      "avg_words_per_sentence": 21.6
     },
     "東京大学": {
       "source_file": "東京大学_2024年度_英語.pdf",
@@ -42091,7 +42109,9 @@
             "story": 2
           }
         }
-      }
+      },
+      "total_sentences": 146,
+      "avg_words_per_sentence": 19.4
     },
     "早稲田大学_理工学部": {
       "source_file": "早稲田大学_2024年度_英語_基幹理工学部・創造理工学部・先進理工学部.pdf",
@@ -43529,5 +43549,9 @@
       }
     }
   },
-  "top_frequent_words": {}
+  "top_frequent_words": {},
+  "sentence_statistics": {
+    "total_sentences": 1793,
+    "overall_avg_words_per_sentence": 19.1
+  }
 }

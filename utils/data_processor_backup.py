@@ -41,34 +41,6 @@ def extract_university_name(source_file):
     
     return filename
 
-def calculate_sentence_stats(english_passages):
-    """英文パッセージから文の統計を計算"""
-    if not english_passages:
-        return {"total_sentences": 0, "avg_words_per_sentence": 0.0, "total_words_in_sentences": 0}
-    
-    total_sentences = 0
-    total_words = 0
-    
-    for passage in english_passages:
-        # 文を分割（.、!、?で終わる文を検出）
-        sentences = re.split(r'[.!?]+', passage)
-        # 空文字列を除去し、意味のある文のみカウント（短すぎる文は除外）
-        valid_sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
-        total_sentences += len(valid_sentences)
-        
-        # 各文の単語数をカウント
-        for sentence in valid_sentences:
-            words = sentence.split()
-            total_words += len(words)
-    
-    avg_words_per_sentence = total_words / total_sentences if total_sentences > 0 else 0.0
-    
-    return {
-        "total_sentences": total_sentences,
-        "avg_words_per_sentence": round(avg_words_per_sentence, 1),
-        "total_words_in_sentences": total_words
-    }
-
 def load_extraction_results():
     """OCR抽出結果の読み込み"""
     extraction_file = "/Users/takashikemmoku/Desktop/wordsearch/extraction_results_pure_english.json"
@@ -96,6 +68,34 @@ def load_vocabulary_analysis():
     except Exception as e:
         print(f"❌ 語彙分析読み込みエラー: {e}")
         return None
+
+def calculate_sentence_stats(english_passages):
+    """英文パッセージから文の統計を計算"""
+    if not english_passages:
+        return {"total_sentences": 0, "avg_words_per_sentence": 0.0, "total_words_in_sentences": 0}
+    
+    total_sentences = 0
+    total_words = 0
+    
+    for passage in english_passages:
+        # 文を分割（.、!、?で終わる文を検出）
+        sentences = re.split(r'[.!?]+', passage)
+        # 空文字列を除去し、意味のある文のみカウント（短すぎる文は除外）
+        valid_sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
+        total_sentences += len(valid_sentences)
+        
+        # 各文の単語数をカウント
+        for sentence in valid_sentences:
+            words = sentence.split()
+            total_words += len(words)
+    
+    avg_words_per_sentence = total_words / total_sentences if total_sentences > 0 else 0.0
+    
+    return {
+        "total_sentences": total_sentences,
+        "avg_words_per_sentence": round(avg_words_per_sentence, 1),
+        "total_words_in_sentences": total_words
+    }
 
 def create_streamlit_data():
     """Streamlit用データ作成"""
@@ -200,6 +200,7 @@ def create_streamlit_data():
         "overall_avg_words_per_sentence": round(overall_avg_words, 1)
     }
     
+    
     # データ保存
     output_file = "../data/analysis_data.json"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -208,19 +209,16 @@ def create_streamlit_data():
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(streamlit_data, f, ensure_ascii=False, indent=2)
         
+        
         print(f"✅ Streamlit用データ生成完了: {output_file}")
         print(f"📊 大学数: {len(university_analysis)}")
         print(f"📚 単語帳数: {len(streamlit_data['vocabulary_summary'])}")
         print(f"📈 総単語数: {streamlit_data['overall_summary']['total_words_extracted']:,}")
-        print(f"📝 総文数: {streamlit_data['sentence_statistics']['total_sentences']:,}")
-        print(f"📖 平均語数/文: {streamlit_data['sentence_statistics']['overall_avg_words_per_sentence']:.1f}")
         
         # 大学リスト表示
         print("\n🏫 含まれる大学・学部:")
         for i, univ in enumerate(university_analysis.keys(), 1):
-            sentences = university_analysis[univ].get('total_sentences', 0)
-            avg_words = university_analysis[univ].get('avg_words_per_sentence', 0)
-            print(f"  {i}. {univ}: {sentences}文, {avg_words:.1f}語/文")
+            print(f"  {i}. {univ}")
         
         return True
         
