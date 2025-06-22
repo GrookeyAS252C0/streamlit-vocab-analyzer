@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-06-22T11:58:10.286649",
+    "generated_at": "2025-06-22T12:03:34.347091",
     "source_files": [
       "extraction_results_pure_english.json",
       "multi_vocabulary_analysis_report.json"
@@ -43546,12 +43546,14 @@
             "increase": 2
           }
         }
-      }
+      },
+      "total_sentences": 140,
+      "avg_words_per_sentence": 22.0
     }
   },
   "top_frequent_words": {},
   "sentence_statistics": {
-    "total_sentences": 1793,
-    "overall_avg_words_per_sentence": 19.1
+    "total_sentences": 1933,
+    "overall_avg_words_per_sentence": 19.3
   }
 }
