@@ -169,18 +169,147 @@ def calculate_summary_stats(data: Dict) -> Dict:
     total_pages = sum(univ.get('pages_processed', 0) for univ in university_data.values())
     avg_ocr_confidence = sum(univ.get('ocr_confidence', 0) for univ in university_data.values()) / len(university_data) if university_data else 0
     
-    # 単語帳別最高カバレッジ率
-    vocab_summary = data.get('vocabulary_summary', {})
-    best_vocab = max(vocab_summary.items(), key=lambda x: x[1].get('target_coverage_rate', 0)) if vocab_summary else (None, {})
+    # 選択された大学データに基づく最適単語帳の計算
+    if university_data:
+        # 選択された大学群での各単語帳のパフォーマンスを集計
+        vocab_performance = {}
+        vocab_books = ["Target 1900", "Target 1400", "システム英単語", "LEAP", "鉄壁"]
+        
+        for vocab_name in vocab_books:
+            total_coverage = 0
+            total_precision = 0
+            total_matched = 0
+            total_weight = 0
+            
+            for univ_data in university_data.values():
+                vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+                coverage_rate = vocab_coverage.get('target_coverage_rate', 0)
+                precision = vocab_coverage.get('extraction_precision', 0)
+                matched_count = vocab_coverage.get('matched_words_count', 0)
+                univ_words = univ_data.get('total_words', 0)
+                
+                if univ_words > 0:
+                    # 単語数による重み付け
+                    total_coverage += coverage_rate * univ_words
+                    total_precision += precision * univ_words
+                    total_matched += matched_count
+                    total_weight += univ_words
+            
+            # 重み付き平均を計算
+            weighted_coverage = total_coverage / total_weight if total_weight > 0 else 0
+            weighted_precision = total_precision / total_weight if total_weight > 0 else 0
+            
+            # 総合スコア（カバレッジ率70% + 抽出精度30%で重み付け）
+            composite_score = (weighted_coverage * 0.7) + (weighted_precision * 0.3)
+            
+            vocab_performance[vocab_name] = {
+                'coverage_rate': round(weighted_coverage, 2),
+                'extraction_precision': round(weighted_precision, 2),
+                'matched_words_count': total_matched,
+                'composite_score': round(composite_score, 2)
+            }
+        
+        # 最高スコアの単語帳を選択
+        best_vocab_item = max(vocab_performance.items(), key=lambda x: x[1]['composite_score']) if vocab_performance else (None, {})
+        best_vocab = (best_vocab_item[0], best_vocab_item[1]) if best_vocab_item[0] else (None, {})
+        best_coverage_rate = best_vocab[1].get('coverage_rate', 0) if best_vocab[1] else 0
+    else:
+        # 選択データがない場合は全体統計を使用
+        vocab_summary = data.get('vocabulary_summary', {})
+        best_vocab = max(vocab_summary.items(), key=lambda x: x[1].get('target_coverage_rate', 0)) if vocab_summary else (None, {})
+        best_coverage_rate = best_vocab[1].get('target_coverage_rate', 0) if best_vocab[1] else 0
     
     return {
         'total_universities': len(university_data),
-        'total_vocabulary_books': len(vocab_summary),
-        'total_words_extracted': overall.get('total_words_extracted', 0),
+        'total_vocabulary_books': 5,  # 固定値（Target 1900, Target 1400, システム英単語, LEAP, 鉄壁）
+        'total_words_extracted': sum(univ.get('total_words', 0) for univ in university_data.values()) if university_data else overall.get('total_words_extracted', 0),
         'total_pages_processed': total_pages,
         'average_ocr_confidence': round(avg_ocr_confidence, 1),
         'best_vocabulary': best_vocab[0],
-        'best_coverage_rate': best_vocab[1].get('target_coverage_rate', 0) if best_vocab[1] else 0
+        'best_coverage_rate': best_coverage_rate
+    }
+
+def get_optimal_vocabulary_for_selection(data: Dict, selected_universities: List[str]) -> Dict:
+    """
+    選択された大学群に対する最適単語帳の詳細情報を取得
+    
+    Args:
+        data: 分析データ
+        selected_universities: 選択された大学リスト
+        
+    Returns:
+        最適単語帳の詳細情報辞書
+    """
+    if not selected_universities:
+        return {}
+    
+    # 選択された大学のデータのみをフィルタ
+    university_data = {k: v for k, v in data.get('university_analysis', {}).items() if k in selected_universities}
+    
+    if not university_data:
+        return {}
+    
+    vocab_performance = {}
+    vocab_books = ["Target 1900", "Target 1400", "システム英単語", "LEAP", "鉄壁"]
+    
+    for vocab_name in vocab_books:
+        total_coverage = 0
+        total_precision = 0
+        total_matched = 0
+        total_weight = 0
+        university_scores = []
+        
+        for univ_name, univ_data in university_data.items():
+            vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+            coverage_rate = vocab_coverage.get('target_coverage_rate', 0)
+            precision = vocab_coverage.get('extraction_precision', 0)
+            matched_count = vocab_coverage.get('matched_words_count', 0)
+            univ_words = univ_data.get('total_words', 0)
+            
+            if univ_words > 0:
+                # 単語数による重み付け
+                total_coverage += coverage_rate * univ_words
+                total_precision += precision * univ_words
+                total_matched += matched_count
+                total_weight += univ_words
+                
+                # 大学別スコア記録
+                university_scores.append({
+                    'university': univ_name,
+                    'coverage_rate': coverage_rate,
+                    'precision': precision,
+                    'matched_count': matched_count
+                })
+        
+        # 重み付き平均を計算
+        weighted_coverage = total_coverage / total_weight if total_weight > 0 else 0
+        weighted_precision = total_precision / total_weight if total_weight > 0 else 0
+        
+        # 総合スコア（カバレッジ率70% + 抽出精度30%で重み付け）
+        composite_score = (weighted_coverage * 0.7) + (weighted_precision * 0.3)
+        
+        vocab_performance[vocab_name] = {
+            'coverage_rate': round(weighted_coverage, 2),
+            'extraction_precision': round(weighted_precision, 2),
+            'matched_words_count': total_matched,
+            'composite_score': round(composite_score, 2),
+            'university_details': university_scores
+        }
+    
+    # 最高スコアの単語帳を特定
+    best_vocab_name = max(vocab_performance.keys(), key=lambda x: vocab_performance[x]['composite_score'])
+    
+    return {
+        'optimal_vocabulary': best_vocab_name,
+        'optimal_score': vocab_performance[best_vocab_name]['composite_score'],
+        'optimal_coverage': vocab_performance[best_vocab_name]['coverage_rate'],
+        'optimal_precision': vocab_performance[best_vocab_name]['extraction_precision'],
+        'all_performance': vocab_performance,
+        'selected_universities_count': len(selected_universities),
+        'selection_summary': {
+            'total_words': sum(univ.get('total_words', 0) for univ in university_data.values()),
+            'total_matched': vocab_performance[best_vocab_name]['matched_words_count']
+        }
     }
 
 def filter_universities_by_criteria(data: Dict, min_coverage: float = 0, vocabulary: str = None) -> List[str]:
