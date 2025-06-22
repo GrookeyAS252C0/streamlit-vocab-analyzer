@@ -30,7 +30,7 @@ from utils.visualizations import (
     create_university_heatmap,
     create_scatter_coverage_precision,
     create_ocr_confidence_gauge,
-    create_word_frequency_chart,
+    create_sentence_statistics_chart,
     create_performance_metrics_table
 )
 
@@ -313,20 +313,27 @@ def show_overview_page(data: dict, metadata: dict):
     st.plotly_chart(fig_heatmap, use_container_width=True)
     st.caption("💡 色が濃い（赤い）ほど高いカバレッジ率。大学ごとの単語帳適合度を一目で比較")
     
-    # 頻出単語
+    # 文章統計
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.subheader("📝 最頻出単語")
-        word_freq_data = data.get('top_frequent_words', {})
-        fig_words = create_word_frequency_chart(word_freq_data)
-        st.plotly_chart(fig_words, use_container_width=True)
+        st.subheader("📝 大学別文章統計")
+        fig_sentences = create_sentence_statistics_chart(data)
+        st.plotly_chart(fig_sentences, use_container_width=True)
+        st.caption("💡 上：抽出された文の総数 | 下：1文あたりの平均語数")
     
     with col2:
         st.subheader("⚡ OCR処理品質")
         avg_confidence = summary_stats.get('average_ocr_confidence', 0)
         fig_gauge = create_ocr_confidence_gauge(avg_confidence)
         st.plotly_chart(fig_gauge, use_container_width=True)
+        
+        # 文章統計サマリー
+        sentence_stats = data.get('sentence_statistics', {})
+        if sentence_stats:
+            st.markdown("### 📊 全体文章統計")
+            st.metric("総文数", f"{sentence_stats.get('total_sentences', 0):,}")
+            st.metric("平均語数/文", f"{sentence_stats.get('overall_avg_words_per_sentence', 0):.1f}語")
 
 def show_university_page(data: dict, metadata: dict):
     """大学別詳細ページ"""
@@ -373,6 +380,8 @@ def show_university_page(data: dict, metadata: dict):
         **📊 処理統計**
         - 総単語数: {university_data.get('total_words', 0):,}
         - ユニーク語数: {university_data.get('unique_words', 0):,}
+        - 文の数: {university_data.get('total_sentences', 0):,}
+        - 平均語数/文: {university_data.get('avg_words_per_sentence', 0):.1f}語
         - 処理ページ: {university_data.get('pages_processed', 0)}
         """)
     

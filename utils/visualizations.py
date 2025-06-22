@@ -241,33 +241,53 @@ def create_ocr_confidence_gauge(confidence: float) -> go.Figure:
     
     return fig
 
-def create_word_frequency_chart(word_freq_data: Dict, top_n: int = 10) -> go.Figure:
+def create_sentence_statistics_chart(data: Dict) -> go.Figure:
     """
-    頻出単語棒グラフ
+    大学別文章統計棒グラフ
     
     Args:
-        word_freq_data: 単語頻度データ
-        top_n: 表示する単語数
+        data: 分析データ
         
     Returns:
         Plotly棒グラフ
     """
-    # 上位N語を取得
-    sorted_words = sorted(word_freq_data.items(), key=lambda x: x[1], reverse=True)[:top_n]
-    words, frequencies = zip(*sorted_words) if sorted_words else ([], [])
+    university_data = data.get('university_analysis', {})
+    universities = []
+    sentences = []
+    avg_words = []
     
-    fig = go.Figure([go.Bar(
-        x=list(words),
-        y=list(frequencies),
-        marker_color='#96CEB4'
-    )])
+    for univ, info in university_data.items():
+        universities.append(univ.replace('早稲田大学_', '早大_'))  # 短縮表示
+        sentences.append(info.get('total_sentences', 0))
+        avg_words.append(info.get('avg_words_per_sentence', 0))
+    
+    # サブプロット作成
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=('文の数', '1文あたりの平均語数'),
+        vertical_spacing=0.15
+    )
+    
+    # 文の数
+    fig.add_trace(
+        go.Bar(x=universities, y=sentences, name='文の数', marker_color='#4ECDC4'),
+        row=1, col=1
+    )
+    
+    # 1文あたりの平均語数
+    fig.add_trace(
+        go.Bar(x=universities, y=avg_words, name='平均語数/文', marker_color='#96CEB4'),
+        row=2, col=1
+    )
     
     fig.update_layout(
-        title=f'最頻出単語 TOP {top_n}',
-        xaxis_title='単語',
-        yaxis_title='出現回数',
-        height=400
+        height=600,
+        showlegend=False,
+        title_text="大学別文章統計"
     )
+    
+    # X軸ラベルを斜めに
+    fig.update_xaxes(tickangle=45)
     
     return fig
 

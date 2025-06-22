@@ -6,6 +6,7 @@
 import json
 import os
 import sys
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -42,7 +43,7 @@ def extract_university_name(source_file):
 
 def load_extraction_results():
     """OCR抽出結果の読み込み"""
-    extraction_file = "../../extraction_results_pure_english.json"
+    extraction_file = "/Users/takashikemmoku/Desktop/wordsearch/extraction_results_pure_english.json"
     if not os.path.exists(extraction_file):
         print(f"❌ OCR結果ファイルが見つかりません: {extraction_file}")
         return None
@@ -56,7 +57,7 @@ def load_extraction_results():
 
 def load_vocabulary_analysis():
     """語彙分析結果の読み込み"""
-    vocab_file = "../../multi_vocabulary_analysis_report.json"
+    vocab_file = "/Users/takashikemmoku/Desktop/wordsearch/multi_vocabulary_analysis_report.json"
     if not os.path.exists(vocab_file):
         print(f"❌ 語彙分析ファイルが見つかりません: {vocab_file}")
         return None
@@ -67,6 +68,34 @@ def load_vocabulary_analysis():
     except Exception as e:
         print(f"❌ 語彙分析読み込みエラー: {e}")
         return None
+
+def calculate_sentence_stats(english_passages):
+    """英文パッセージから文の統計を計算"""
+    if not english_passages:
+        return {"total_sentences": 0, "avg_words_per_sentence": 0.0, "total_words_in_sentences": 0}
+    
+    total_sentences = 0
+    total_words = 0
+    
+    for passage in english_passages:
+        # 文を分割（.、!、?で終わる文を検出）
+        sentences = re.split(r'[.!?]+', passage)
+        # 空文字列を除去し、意味のある文のみカウント（短すぎる文は除外）
+        valid_sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
+        total_sentences += len(valid_sentences)
+        
+        # 各文の単語数をカウント
+        for sentence in valid_sentences:
+            words = sentence.split()
+            total_words += len(words)
+    
+    avg_words_per_sentence = total_words / total_sentences if total_sentences > 0 else 0.0
+    
+    return {
+        "total_sentences": total_sentences,
+        "avg_words_per_sentence": round(avg_words_per_sentence, 1),
+        "total_words_in_sentences": total_words
+    }
 
 def create_streamlit_data():
     """Streamlit用データ作成"""
@@ -106,11 +135,18 @@ def create_streamlit_data():
     # university_analysis作成
     university_analysis = {}
     extracted_data = extraction_data.get("extracted_data", [])
-    university_vocab_data = vocab_data.get("universities_analysis", {})
+    university_vocab_data = vocab_data.get("university_analysis", {})
+    
+    print(f"🔍 語彙分析データの大学キー: {list(university_vocab_data.keys())}")
     
     for item in extracted_data:
         source_file = item.get("source_file", "")
         university_name = extract_university_name(source_file)
+        
+        # 文章統計を計算
+        english_passages = item.get("english_passages", [])
+        sentence_stats = calculate_sentence_stats(english_passages)
+        
         
         # OCRデータ
         ocr_info = {
@@ -118,14 +154,30 @@ def create_streamlit_data():
             "total_words": item.get("word_count", 0),
             "unique_words": len(item.get("extracted_words", [])),
             "ocr_confidence": round(item.get("ocr_confidence", 0) * 100, 2),
-            "pages_processed": item.get("pages_processed", 0)
+            "pages_processed": item.get("pages_processed", 0),
+            "total_sentences": sentence_stats["total_sentences"],
+            "avg_words_per_sentence": sentence_stats["avg_words_per_sentence"]
         }
         
-        # 語彙分析データを追加
-        if university_name in university_vocab_data:
-            vocab_coverage = university_vocab_data[university_name].get("vocabulary_coverage", {})
+        # 語彙分析データを統合（複数のキー形式を試行）
+        vocab_coverage = None
+        potential_keys = [
+            university_name,  # 早稲田大学_法学部
+            university_name.split('_')[0],  # 早稲田大学
+            source_file.replace('.pdf', ''),  # 元ファイル名
+            source_file  # PDFファイル名
+        ]
+        
+        for key in potential_keys:
+            if key in university_vocab_data:
+                vocab_coverage = university_vocab_data[key].get("vocabulary_coverage", {})
+                print(f"✅ マッチ: {university_name} -> {key}")
+                break
+        
+        if vocab_coverage:
             ocr_info["vocabulary_coverage"] = vocab_coverage
         else:
+            print(f"⚠️  語彙データなし: {university_name}")
             # デフォルトの語彙カバレッジ（データがない場合）
             ocr_info["vocabulary_coverage"] = {
                 "Target 1900": {"matched_words_count": 0, "target_coverage_rate": 0.0, "extraction_precision": 0.0},
@@ -139,8 +191,16 @@ def create_streamlit_data():
     
     streamlit_data["university_analysis"] = university_analysis
     
-    # 頻出単語データ
-    streamlit_data["top_frequent_words"] = vocab_data.get("top_frequent_words", {})
+    # 全体の文章統計を計算
+    total_sentences = sum([info.get("total_sentences", 0) for info in university_analysis.values()])
+    total_words_in_sentences = sum([info.get("avg_words_per_sentence", 0) * info.get("total_sentences", 0) for info in university_analysis.values()])
+    overall_avg_words = total_words_in_sentences / total_sentences if total_sentences > 0 else 0
+    
+    streamlit_data["sentence_statistics"] = {
+        "total_sentences": total_sentences,
+        "overall_avg_words_per_sentence": round(overall_avg_words, 1)
+    }
+    
     
     # データ保存
     output_file = "../data/analysis_data.json"
