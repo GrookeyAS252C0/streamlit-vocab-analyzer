@@ -30,7 +30,6 @@ from utils.visualizations import (
     create_university_heatmap,
     create_scatter_coverage_precision,
     create_ocr_confidence_gauge,
-    create_sentence_statistics_chart,
     create_performance_metrics_table
 )
 
@@ -318,9 +317,45 @@ def show_overview_page(data: dict, metadata: dict):
     
     with col1:
         st.subheader("📝 大学別文章統計")
-        fig_sentences = create_sentence_statistics_chart(data)
-        st.plotly_chart(fig_sentences, use_container_width=True)
-        st.caption("💡 上：抽出された文の総数 | 下：1文あたりの平均語数")
+        
+        # 文章統計テーブル作成
+        university_data = data.get('university_analysis', {})
+        sentence_table_data = []
+        
+        for univ, info in university_data.items():
+            sentence_table_data.append({
+                '大学・学部': univ.replace('早稲田大学_', '早大_'),
+                '文の数': info.get('total_sentences', 0),
+                '平均語数/文': info.get('avg_words_per_sentence', 0.0)
+            })
+        
+        # DataFrameに変換してソート（文の数の降順）
+        import pandas as pd
+        sentence_df = pd.DataFrame(sentence_table_data)
+        sentence_df = sentence_df.sort_values('文の数', ascending=False)
+        
+        # スタイル付きテーブル表示
+        try:
+            st.dataframe(
+                sentence_df.style.format({
+                    '文の数': '{:,}',
+                    '平均語数/文': '{:.1f}'
+                }).background_gradient(subset=['文の数', '平均語数/文'], cmap='RdYlGn'),
+                use_container_width=True,
+                height=400
+            )
+        except ImportError:
+            # matplotlibが利用できない場合のフォールバック
+            st.dataframe(
+                sentence_df.style.format({
+                    '文の数': '{:,}',
+                    '平均語数/文': '{:.1f}'
+                }),
+                use_container_width=True,
+                height=400
+            )
+        
+        st.caption("💡 文の数が多いほど豊富なコンテンツ、平均語数/文が高いほど複雑な文章構造")
     
     with col2:
         st.subheader("⚡ OCR処理品質")
