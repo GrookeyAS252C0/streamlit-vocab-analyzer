@@ -233,11 +233,11 @@ def setup_analysis_sidebar(analysis_data):
     exclude_basic = st.sidebar.checkbox(
         "基礎語彙を除外して分析",
         value=False,
-        help="Target 1400の基礎語彙を除外して、より高度な語彙のみを分析します"
+        help="Target 1200の基礎語彙を除外して、より高度な語彙のみを分析します"
     )
     
     if exclude_basic:
-        st.sidebar.info("📝 Target 1400の基礎語彙を除外した高度語彙分析を実行します")
+        st.sidebar.info("📝 Target 1200の基礎語彙を除外した高度語彙分析を実行します")
     else:
         st.sidebar.info("📝 全語彙を含む標準分析を実行します")
     
@@ -429,10 +429,10 @@ def perform_vocabulary_analysis(extraction_data):
                 # 基礎語彙除外オプションの確認
                 exclude_basic = st.session_state.get('exclude_basic_vocab', False)
                 if exclude_basic:
-                    # Target 1400の基礎語彙を除外
-                    basic_vocab = vocab_books.get('Target 1400', set())
+                    # Target 1200の基礎語彙を除外
+                    basic_vocab = vocab_books.get('Target 1200', set())
                     cleaned_words = [word for word in cleaned_words if word not in basic_vocab]
-                    st.write(f"  🔧 基礎語彙除外: Target 1400の{len(basic_vocab)}語を除外")
+                    st.write(f"  🔧 基礎語彙除外: Target 1200の{len(basic_vocab)}語を除外")
                 
                 # Lemmatization処理
                 try:
@@ -470,7 +470,7 @@ def perform_vocabulary_analysis(extraction_data):
                 # 基礎語彙除外の効果を表示
                 exclude_basic = st.session_state.get('exclude_basic_vocab', False)
                 if exclude_basic:
-                    basic_vocab = vocab_books.get('Target 1400', set())
+                    basic_vocab = vocab_books.get('Target 1200', set())
                     original_unique = len(set([word.lower().strip() for word in extracted_words if word and len(word) > 1]))
                     excluded_count = original_unique - len(unique_words)
                     st.write(f"✅ {university_name}: {len(extracted_words)}語 → {original_unique}ユニーク語 → {len(unique_words)}高度語彙 (基礎語彙{excluded_count}語除外)")
@@ -592,7 +592,7 @@ def show_analysis_dashboard(analysis_data):
     
     # 分析モードの表示
     if exclude_basic:
-        st.success("🎯 **高度語彙分析モード**: Target 1400の基礎語彙を除外した分析結果を表示しています")
+        st.success("🎯 **高度語彙分析モード**: Target 1200の基礎語彙を除外した分析結果を表示しています")
     else:
         st.info("📊 **標準分析モード**: 全語彙を含む分析結果を表示しています")
     
@@ -631,7 +631,7 @@ def show_overview_analysis(analysis_data: dict):
         if exclude_basic:
             st.warning("""
             **🔧 高度語彙モード**  
-            Target 1400の基礎語彙を除外し、より高度な語彙のみを分析中。
+            Target 1200の基礎語彙を除外し、より高度な語彙のみを分析中。
             """)
         else:
             st.info("""
