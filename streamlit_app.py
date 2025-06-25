@@ -229,12 +229,49 @@ def perform_vocabulary_analysis(extraction_data):
             return None
         
         st.write(f"extraction_data keys: {list(extraction_data.keys())}")
+        
+        # extraction_summary の詳細確認
+        summary = extraction_data.get('extraction_summary', {})
+        st.write(f"extraction_summary: {summary}")
+        
+        # extracted_data の詳細確認
         extracted_data_list = extraction_data.get('extracted_data', [])
+        st.write(f"extracted_data type: {type(extracted_data_list)}")
+        st.write(f"extracted_data length: {len(extracted_data_list)}")
+        
         if not extracted_data_list:
             st.error("❌ extracted_data リストが空です")
+            st.write("**JSONファイル構造の確認:**")
+            st.write("期待される形式:")
+            st.code("""{
+  "extraction_summary": {...},
+  "extracted_data": [
+    {
+      "source_file": "大学名_年度_英語_学部名.pdf",
+      "extracted_words": ["word1", "word2", ...]
+    }
+  ]
+}""")
+            st.write("**現在のJSONファイル内容（一部）:**")
+            import json
+            st.code(json.dumps(extraction_data, indent=2, ensure_ascii=False)[:1000] + "...")
             return None
         
         st.success(f"✅ {len(extracted_data_list)}件のデータエントリを確認")
+        
+        # 最初のエントリの詳細確認
+        if len(extracted_data_list) > 0:
+            first_entry = extracted_data_list[0]
+            st.write("**最初のエントリの確認:**")
+            st.write(f"  - Keys: {list(first_entry.keys()) if isinstance(first_entry, dict) else 'Not a dict'}")
+            if isinstance(first_entry, dict):
+                st.write(f"  - source_file: '{first_entry.get('source_file', 'Missing')}'")
+                words = first_entry.get('extracted_words', [])
+                st.write(f"  - extracted_words count: {len(words) if isinstance(words, list) else 'Not a list'}")
+                if isinstance(words, list) and len(words) > 0:
+                    st.write(f"  - Sample words: {words[:5]}")
+                else:
+                    st.write(f"  - extracted_words content: {words}")
         
         # 分析結果の初期化
         analysis_result = {
