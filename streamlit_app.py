@@ -77,12 +77,16 @@ def main():
                 if st.button("📊 語彙分析を実行", type="primary"):
                     with st.spinner("語彙分析を実行中..."):
                         analysis_data = perform_vocabulary_analysis(combined_data)
-                        st.session_state.analysis_data = analysis_data
-                        st.success("✅ 語彙分析が完了しました！")
-                        st.rerun()
+                        if analysis_data:
+                            st.session_state.analysis_data = analysis_data
+                            st.session_state.analysis_completed = True
+                            st.success("✅ 語彙分析が完了しました！")
+                        else:
+                            st.error("❌ 語彙分析に失敗しました")
                 
                 # 分析結果の表示
-                if 'analysis_data' in st.session_state:
+                if st.session_state.get('analysis_completed', False) and 'analysis_data' in st.session_state:
+                    st.markdown("---")
                     show_analysis_dashboard(st.session_state.analysis_data)
             else:
                 st.error("❌ ファイルの読み込みに失敗しました")
@@ -366,21 +370,16 @@ def show_overview_analysis(analysis_data: dict):
         """)
         return
     
-    # 選択された大学のデータに基づいてサマリー統計を計算
-    filtered_data = {
-        'university_analysis': {k: v for k, v in data.get('university_analysis', {}).items() if k in selected_universities},
-        'vocabulary_summary': data.get('vocabulary_summary', {}),
-        'overall_summary': data.get('overall_summary', {})
-    }
-    summary_stats = calculate_summary_stats(filtered_data)
+    # 選択された大学のデータを取得
+    university_analysis = analysis_data.get('university_analysis', {})
+    vocabulary_summary = analysis_data.get('vocabulary_summary', {})
     
     # 選択された大学の統計
-    selected_total_words = sum([info.get('total_words', 0) for univ, info in data.get('university_analysis', {}).items() if univ in selected_universities])
-    selected_total_pages = sum([info.get('pages_processed', 0) for univ, info in data.get('university_analysis', {}).items() if univ in selected_universities])
-    selected_avg_confidence = sum([info.get('ocr_confidence', 0) for univ, info in data.get('university_analysis', {}).items() if univ in selected_universities]) / len(selected_universities) if selected_universities else 0
+    selected_total_words = sum([info.get('total_words', 0) for univ, info in university_analysis.items() if univ in selected_universities])
+    selected_total_pages = sum([info.get('pages_processed', 0) for univ, info in university_analysis.items() if univ in selected_universities])
     
-    # メトリクス表示（選択された大学のみ）
-    col1, col2, col3, col4 = st.columns(4)
+    # メトリクス表示
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         st.metric(
@@ -390,35 +389,21 @@ def show_overview_analysis(analysis_data: dict):
         )
     
     with col2:
+        # 最高カバレッジ率を計算
+        best_coverage = 0
+        best_vocab = "N/A"
+        for vocab_name, summary in vocabulary_summary.items():
+            if summary.get('average_coverage_rate', 0) > best_coverage:
+                best_coverage = summary.get('average_coverage_rate', 0)
+                best_vocab = vocab_name
+        
         st.metric(
-            label="平均OCR信頼度",
-            value=f"{selected_avg_confidence:.1f}%",
-            delta=None
+            label="最適単語帳",
+            value=best_vocab,
+            delta=f"{best_coverage:.1f}%"
         )
     
     with col3:
-        # 選択された大学に基づく最適単語帳を計算
-        optimal_vocab_info = get_optimal_vocabulary_for_selection(data, selected_universities)
-        
-        if optimal_vocab_info and 'optimal_vocabulary' in optimal_vocab_info:
-            optimal_name = optimal_vocab_info['optimal_vocabulary']
-            optimal_score = optimal_vocab_info['optimal_score']
-            optimal_coverage = optimal_vocab_info['optimal_coverage']
-            
-            st.metric(
-                label="選択大学の最適単語帳",
-                value=optimal_name,
-                delta=f"総合スコア: {optimal_score:.1f}",
-                help=f"カバレッジ率: {optimal_coverage:.1f}%"
-            )
-        else:
-            st.metric(
-                label="最適単語帳",
-                value=summary_stats.get('best_vocabulary', 'N/A'),
-                delta=f"{summary_stats.get('best_coverage_rate', 0):.1f}%"
-            )
-    
-    with col4:
         st.metric(
             label="処理ページ数",
             value=f"{selected_total_pages}",
@@ -427,178 +412,70 @@ def show_overview_analysis(analysis_data: dict):
     
     st.markdown("---")
     
-    # チャート表示（選択された大学のデータのみ）
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📊 選択大学の単語帳別カバレッジ率・抽出精度")
-        fig_vocab = create_vocabulary_comparison_bar(filtered_data)
-        st.plotly_chart(fig_vocab, use_container_width=True)
-        st.caption("💡 選択した大学のデータに基づく統計。カバレッジ率が高いほど実用的、抽出精度が高いほど学習効率が良い")
-    
-    with col2:
-        st.subheader("🎯 選択大学のカバレッジ率 vs 抽出精度")
-        fig_scatter = create_scatter_coverage_precision(filtered_data)
-        st.plotly_chart(fig_scatter, use_container_width=True)
-        st.caption("💡 選択した大学での結果。右上にある単語帳ほど理想的（高実用性×高効率性）")
-    
-    # ヒートマップ（選択された大学のみ）
-    if len(selected_universities) > 1:
-        st.subheader("🔥 選択大学×単語帳 カバレッジ率ヒートマップ")
-        fig_heatmap = create_university_heatmap(filtered_data)
-        st.plotly_chart(fig_heatmap, use_container_width=True)
-        st.caption("💡 色が濃い（赤い）ほど高いカバレッジ率。選択した大学間での単語帳適合度を比較")
-    else:
-        st.subheader("📋 選択大学の詳細データ")
-        st.info("複数の大学を選択すると、大学間比較のヒートマップが表示されます。")
-    
-    # 文章統計（選択された大学のみ）
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.subheader("📝 選択大学の文章統計")
+    # 単語帳別パフォーマンスチャート
+    if vocabulary_summary:
+        st.subheader("📚 単語帳別パフォーマンス")
         
-        # 選択された大学の文章統計テーブル作成
-        university_data = {k: v for k, v in data.get('university_analysis', {}).items() if k in selected_universities}
-        sentence_table_data = []
-        
-        for univ, info in university_data.items():
-            sentence_table_data.append({
-                '大学・学部': univ.replace('早稲田大学_', '早大_'),
-                '文の数': info.get('total_sentences', 0),
-                '平均語数/文': info.get('avg_words_per_sentence', 0.0)
+        # データ準備
+        vocab_data = []
+        for vocab_name, summary in vocabulary_summary.items():
+            vocab_data.append({
+                '単語帳': vocab_name,
+                'カバレッジ率(%)': summary.get('average_coverage_rate', 0),
+                '抽出精度(%)': summary.get('average_extraction_precision', 0),
+                '一致語数': summary.get('total_matched_words', 0)
             })
         
-        # DataFrameに変換してソート（文の数の降順）
-        import pandas as pd
-        sentence_df = pd.DataFrame(sentence_table_data)
-        sentence_df = sentence_df.sort_values('文の数', ascending=False)
+        vocab_df = pd.DataFrame(vocab_data)
         
-        # スタイル付きテーブル表示
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # カバレッジ率棒グラフ
+            fig_coverage = px.bar(
+                vocab_df, 
+                x='単語帳', 
+                y='カバレッジ率(%)',
+                title='単語帳別カバレッジ率',
+                color='カバレッジ率(%)',
+                color_continuous_scale='RdYlGn'
+            )
+            fig_coverage.update_layout(height=400)
+            st.plotly_chart(fig_coverage, use_container_width=True)
+        
+        with col2:
+            # 抽出精度棒グラフ
+            fig_precision = px.bar(
+                vocab_df, 
+                x='単語帳', 
+                y='抽出精度(%)',
+                title='単語帳別抽出精度',
+                color='抽出精度(%)',
+                color_continuous_scale='RdYlBu'
+            )
+            fig_precision.update_layout(height=400)
+            st.plotly_chart(fig_precision, use_container_width=True)
+        
+        # パフォーマンステーブル
+        st.subheader("📊 単語帳パフォーマンステーブル")
         try:
             st.dataframe(
-                sentence_df.style.format({
-                    '文の数': '{:,}',
-                    '平均語数/文': '{:.1f}'
-                }).background_gradient(subset=['文の数', '平均語数/文'], cmap='RdYlGn'),
-                use_container_width=True,
-                height=400
+                vocab_df.style.format({
+                    'カバレッジ率(%)': '{:.1f}',
+                    '抽出精度(%)': '{:.1f}',
+                    '一致語数': '{:,}'
+                }).background_gradient(subset=['カバレッジ率(%)', '抽出精度(%)'], cmap='RdYlGn'),
+                use_container_width=True
             )
         except ImportError:
-            # matplotlibが利用できない場合のフォールバック
             st.dataframe(
-                sentence_df.style.format({
-                    '文の数': '{:,}',
-                    '平均語数/文': '{:.1f}'
+                vocab_df.style.format({
+                    'カバレッジ率(%)': '{:.1f}',
+                    '抽出精度(%)': '{:.1f}',
+                    '一致語数': '{:,}'
                 }),
-                use_container_width=True,
-                height=400
+                use_container_width=True
             )
-        
-        st.caption("💡 文の数が多いほど豊富なコンテンツ、平均語数/文が高いほど複雑な文章構造")
-    
-    with col2:
-        st.subheader("⚡ OCR処理品質")
-        avg_confidence = summary_stats.get('average_ocr_confidence', 0)
-        fig_gauge = create_ocr_confidence_gauge(avg_confidence)
-        st.plotly_chart(fig_gauge, use_container_width=True)
-        
-        # 選択大学の文章統計サマリー
-        if university_data:
-            selected_total_sentences = sum([info.get('total_sentences', 0) for info in university_data.values()])
-            selected_total_words_in_sentences = sum([info.get('avg_words_per_sentence', 0) * info.get('total_sentences', 0) for info in university_data.values()])
-            selected_overall_avg = selected_total_words_in_sentences / selected_total_sentences if selected_total_sentences > 0 else 0
-            
-            st.markdown("### 📊 選択大学文章統計")
-            st.metric("総文数", f"{selected_total_sentences:,}")
-            st.metric("平均語数/文", f"{selected_overall_avg:.1f}語")
-    
-    # 選択大学の最適単語帳詳細情報
-    if len(selected_universities) >= 1:
-        st.markdown("---")
-        st.subheader("🎯 選択大学の最適単語帳分析")
-        
-        optimal_vocab_info = get_optimal_vocabulary_for_selection(data, selected_universities)
-        
-        if optimal_vocab_info and 'optimal_vocabulary' in optimal_vocab_info:
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                # 最適単語帳の詳細情報
-                optimal_name = optimal_vocab_info['optimal_vocabulary']
-                optimal_score = optimal_vocab_info['optimal_score']
-                optimal_coverage = optimal_vocab_info['optimal_coverage']
-                optimal_precision = optimal_vocab_info['optimal_precision']
-                total_matched = optimal_vocab_info['selection_summary']['total_matched']
-                
-                st.success(f"""
-                **🏆 最適単語帳: {optimal_name}**
-                - 📈 総合スコア: {optimal_score:.1f}/100点
-                - 📊 カバレッジ率: {optimal_coverage:.1f}%
-                - 🎯 抽出精度: {optimal_precision:.1f}%
-                - ✅ 一致語数: {total_matched:,}語
-                """)
-                
-                # 単語帳別パフォーマンス比較
-                st.markdown("##### 📚 全単語帳パフォーマンス比較")
-                
-                performance_data = []
-                for vocab_name, perf in optimal_vocab_info['all_performance'].items():
-                    is_optimal = vocab_name == optimal_name
-                    performance_data.append({
-                        '単語帳': f"🏆 {vocab_name}" if is_optimal else vocab_name,
-                        '総合スコア': perf['composite_score'],
-                        'カバレッジ率(%)': perf['coverage_rate'],
-                        '抽出精度(%)': perf['extraction_precision'],
-                        '一致語数': perf['matched_words_count']
-                    })
-                
-                # DataFrameで表示
-                perf_df = pd.DataFrame(performance_data)
-                perf_df = perf_df.sort_values('総合スコア', ascending=False)
-                
-                try:
-                    st.dataframe(
-                        perf_df.style.format({
-                            '総合スコア': '{:.1f}',
-                            'カバレッジ率(%)': '{:.1f}',
-                            '抽出精度(%)': '{:.1f}',
-                            '一致語数': '{:,}'
-                        }).background_gradient(subset=['総合スコア'], cmap='RdYlGn'),
-                        use_container_width=True
-                    )
-                except ImportError:
-                    st.dataframe(
-                        perf_df.style.format({
-                            '総合スコア': '{:.1f}',
-                            'カバレッジ率(%)': '{:.1f}',
-                            '抽出精度(%)': '{:.1f}',
-                            '一致語数': '{:,}'
-                        }),
-                        use_container_width=True
-                    )
-                
-                st.caption("💡 総合スコア = カバレッジ率×70% + 抽出精度×30%")
-            
-            with col2:
-                # 選択情報サマリー
-                st.info(f"""
-                **📊 選択情報**
-                - 選択大学数: {optimal_vocab_info['selected_universities_count']}
-                - 総単語数: {optimal_vocab_info['selection_summary']['total_words']:,}語
-                
-                **🔍 算出方法**
-                - 各大学の単語数で重み付け平均
-                - カバレッジ率を重視した評価
-                """)
-                
-                # 選択大学リスト
-                st.markdown("**📝 選択大学一覧:**")
-                for i, univ in enumerate(selected_universities, 1):
-                    short_name = univ.replace('早稲田大学_', '早大_').replace('慶應義塾大学_', '慶大_')
-                    st.write(f"{i}. {short_name}")
-        else:
-            st.warning("選択された大学の最適単語帳データを取得できませんでした。")
 
 def show_university_analysis(analysis_data: dict):
     """大学別詳細タブのコンテンツ"""
@@ -747,121 +624,86 @@ def show_comparison_analysis(analysis_data: dict):
         return
     
     if len(selected_universities) < 2:
-        st.warning(f"""
-        **比較分析には2つ以上の大学が必要です**
-        
-        現在選択: {len(selected_universities)}大学（{', '.join(selected_universities)}）
-        
-        👈 左のサイドバーで追加の大学を選択してください。
-        """)
+        st.warning("比較分析には2つ以上の大学が必要です")
         return
     
-    # 比較分析タブ
-    tab1, tab2, tab3 = st.tabs(["📊 レーダーチャート", "📋 詳細テーブル", "🎯 ランキング"])
+    # 大学間比較テーブル
+    st.subheader("📊 大学間比較")
     
-    with tab1:
-        st.subheader("🕸️ 大学別単語帳カバレッジ率レーダーチャート")
-        fig_radar = create_coverage_radar_chart(data, selected_universities)
-        st.plotly_chart(fig_radar, use_container_width=True)
-        
-        st.info("""
-        **📖 読み方**: 
-        - 外側に向かうほど高いカバレッジ率（その単語帳が入試により適している）
-        - 各軸は単語帳を表す（5種類の単語帳を比較）
-        - 色分けで大学を区別（複数大学の特徴を一目で比較）
-        - 大きく外に広がった形ほど、多くの単語帳で高いカバレッジ率を示す
-        """)
+    comparison_data = []
+    university_analysis = analysis_data.get('university_analysis', {})
     
-    with tab2:
-        st.subheader("📊 大学別パフォーマンス詳細テーブル")
-        performance_df = create_performance_metrics_table(data, selected_universities)
+    for univ in selected_universities:
+        univ_data = university_analysis.get(univ, {})
+        vocab_coverage = univ_data.get('vocabulary_coverage', {})
         
-        try:
-            st.dataframe(
-                performance_df.style.format({
-                    'OCR信頼度(%)': '{:.1f}',
-                    '最高カバレッジ率(%)': '{:.1f}'
-                }).background_gradient(
-                    subset=['OCR信頼度(%)', '最高カバレッジ率(%)'], 
-                    cmap='RdYlGn'
-                ),
-                use_container_width=True
-            )
-        except ImportError:
-            # matplotlibが利用できない場合のフォールバック
-            st.dataframe(
-                performance_df.style.format({
-                    'OCR信頼度(%)': '{:.1f}',
-                    '最高カバレッジ率(%)': '{:.1f}'
-                }),
-                use_container_width=True
-            )
+        # 最高カバレッジ率と最適単語帳を探す
+        best_coverage = 0
+        best_vocab = "N/A"
+        
+        for vocab_name, stats in vocab_coverage.items():
+            coverage = stats.get('target_coverage_rate', 0)
+            if coverage > best_coverage:
+                best_coverage = coverage
+                best_vocab = vocab_name
+        
+        comparison_data.append({
+            '大学・学部': univ,
+            '総単語数': univ_data.get('total_words', 0),
+            'ユニーク単語数': univ_data.get('unique_words', 0),
+            '最適単語帳': best_vocab,
+            '最高カバレッジ率(%)': round(best_coverage, 1),
+            '処理ページ': univ_data.get('pages_processed', 0)
+        })
     
-    with tab3:
-        st.subheader("🏆 大学ランキング")
-        
-        # ランキング基準選択
-        ranking_criteria = st.selectbox(
-            "ランキング基準を選択",
-            ["最高カバレッジ率", "OCR信頼度", "総単語数", "ユニーク単語数"]
+    comparison_df = pd.DataFrame(comparison_data)
+    
+    # スタイル付きテーブル表示
+    try:
+        st.dataframe(
+            comparison_df.style.format({
+                '総単語数': '{:,}',
+                'ユニーク単語数': '{:,}',
+                '最高カバレッジ率(%)': '{:.1f}'
+            }).background_gradient(subset=['最高カバレッジ率(%)'], cmap='RdYlGn'),
+            use_container_width=True
         )
+    except ImportError:
+        st.dataframe(
+            comparison_df.style.format({
+                '総単語数': '{:,}',
+                'ユニーク単語数': '{:,}',
+                '最高カバレッジ率(%)': '{:.1f}'
+            }),
+            use_container_width=True
+        )
+    
+    # ランキング表示
+    st.subheader("🏆 ランキング")
+    
+    ranking_criteria = st.selectbox(
+        "ランキング基準",
+        ["最高カバレッジ率(%)", "総単語数", "ユニーク単語数"]
+    )
+    
+    sorted_df = comparison_df.sort_values(ranking_criteria, ascending=False)
+    
+    for i, (_, row) in enumerate(sorted_df.iterrows(), 1):
+        medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}位"
         
-        performance_df = create_performance_metrics_table(data, selected_universities)
+        criteria_value = row[ranking_criteria]
+        if "(%" in ranking_criteria:
+            criteria_display = f"{criteria_value}%"
+        else:
+            criteria_display = f"{criteria_value:,}"
         
-        # デバッグ情報（本番では削除可能）
-        # st.write("DEBUG - DataFrame columns:", performance_df.columns.tolist())
-        
-        try:
-            if ranking_criteria == "最高カバレッジ率":
-                sorted_df = performance_df.sort_values('最高カバレッジ率(%)', ascending=False)
-            elif ranking_criteria == "OCR信頼度":
-                sorted_df = performance_df.sort_values('OCR信頼度(%)', ascending=False)
-            elif ranking_criteria == "総単語数":
-                sorted_df = performance_df.sort_values('総単語数', ascending=False)
-            else:  # ユニーク単語数
-                sorted_df = performance_df.sort_values('ユニーク単語数', ascending=False)
-        except KeyError as e:
-            st.error(f"ソートエラー: 列 '{e}' が見つかりません。利用可能な列: {performance_df.columns.tolist()}")
-            sorted_df = performance_df
-        
-        # ランキング表示
-        for i, (_, row) in enumerate(sorted_df.iterrows(), 1):
-            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}位"
-            
-            # 列名のマッピング
-            column_mapping = {
-                "最高カバレッジ率": "最高カバレッジ率(%)",
-                "OCR信頼度": "OCR信頼度(%)",
-                "総単語数": "総単語数",
-                "ユニーク単語数": "ユニーク単語数"
-            }
-            
-            actual_column = column_mapping.get(ranking_criteria, ranking_criteria)
-            
-            try:
-                criteria_value = row[actual_column]
-                
-                # 値の表示形式を調整
-                if "%" in actual_column:
-                    criteria_display = f"{criteria_value}%"
-                else:
-                    criteria_display = f"{criteria_value:,}"
-                
-                with st.container():
-                    st.markdown(f"""
-                    ### {medal} {row['大学・学部']}
-                    - **{ranking_criteria}**: {criteria_display}
-                    - **最適単語帳**: {row['最適単語帳']}
-                    - **OCR信頼度**: {row['OCR信頼度(%)']}%
-                    """)
-            except KeyError as e:
-                st.error(f"表示エラー: 列 '{e}' が見つかりません。")
-                with st.container():
-                    st.markdown(f"""
-                    ### {medal} {row['大学・学部']}
-                    - **最適単語帳**: {row.get('最適単語帳', 'N/A')}
-                    - **OCR信頼度**: {row.get('OCR信頼度(%)', 0)}%
-                    """)
+        with st.container():
+            st.markdown(f"""
+            ### {medal} {row['大学・学部']}
+            - **{ranking_criteria}**: {criteria_display}
+            - **最適単語帳**: {row['最適単語帳']}
+            - **処理ページ**: {row['処理ページ']}
+            """)
 
 if __name__ == "__main__":
     main()
