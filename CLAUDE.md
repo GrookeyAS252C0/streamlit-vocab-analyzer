@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-このStreamlitダッシュボードは、大学入試問題PDF から OCR + LLM で抽出した英語単語を、5つの単語帳（Target 1900/1400、システム英単語、LEAP、鉄壁）と比較分析するWebアプリケーションです。
+このStreamlitダッシュボードは、`extraction_results_pure_english.json`ファイルから英語単語を読み込み、5つの単語帳（Target 1900/1400、システム英単語、LEAP、鉄壁）と比較分析するWebアプリケーションです。
+
+**重要**: このダッシュボードはファイルアップロード機能により、OCR処理システムとは独立して動作します。アップロードされたJSONデータをリアルタイムで分析し、結果を表示します。
 
 ## 主要なコマンド
 
@@ -24,16 +26,44 @@ streamlit run streamlit_app.py --logger.level=debug
 ```bash
 # 1. 親ディレクトリで分析実行（重い処理）
 cd ../
-python pdf_text_extractor.py
-python vocabulary_analyzer_multi.py
+python incremental_processor.py  # 新PDFファイル自動検出・処理
+# または手動実行:
+python pdf_text_extractor.py && python vocabulary_analyzer_multi.py
 
 # 2. Streamlit用データ生成
+cd streamlit-vocab-analyzer
 python utils/data_processor.py
 
 # 3. GitHubにプッシュ（自動デプロイ）
-git add data/
+git add data/analysis_data.json
 git commit -m "Update analysis data"
 git push origin main
+```
+
+### 新規大学・学部追加時の重要手順
+```bash
+# 1. utils/data_processor.py の extract_university_name() 関数を更新
+# 2. 新大学の学部認識パターンを追加
+# 3. データ再生成とプッシュ
+python utils/data_processor.py
+git add utils/data_processor.py data/analysis_data.json
+git commit -m "Add new university support"
+git push origin main
+```
+
+### テストとデバッグ用コマンド
+```bash
+# カバレッジ率計算のデバッグ
+python debug_coverage_calculation.py
+
+# 最適単語帳機能テスト
+python test_optimal_vocabulary.py
+
+# データの整合性確認
+python final_data_test.py
+
+# キャッシュクリア付きでアプリ起動
+streamlit run streamlit_app.py --server.enableCORS=false --server.enableXsrfProtection=false
 ```
 
 ### Streamlit Cloud デプロイ
@@ -61,24 +91,33 @@ git push origin main
    - レーダーチャート、ヒートマップ、散布図、ゲージチャート
    - 大学比較用の複合可視化
 
+4. **utils/data_processor.py** - データ前処理システム
+   - 親ディレクトリの分析結果をStreamlit用に軽量化
+   - `estimate_department_vocabulary_coverage()` - 学部レベル推定機能
+   - `create_university_consolidated_data()` - 大学統合データ生成
+   - `extract_university_name()` - ファイル名からの大学・学部抽出
+
 ### データ構造
 
 #### data/analysis_data.json（重要）
 ```json
 {
   "metadata": { "生成時刻、バージョン情報" },
-  "overall_summary": { "全体統計（11大学・学部分）" },
+  "overall_summary": { "全体統計（21大学・学部 + 2統合）" },
   "vocabulary_summary": { "5単語帳の総合カバレッジ率" },
   "university_analysis": { 
-    "早稲田大学_法学部": { "個別大学の詳細データ" },
-    "早稲田大学_政治経済学部": { ... },
-    "東京大学": { ... },
-    "早稲田大学_教育学部": { ... },
-    // ... 全11大学・学部
+    "早稲田大学_法学部": { "個別学部データ" },
+    "慶應義塾大学_医学部": { "個別学部データ" },
+    "東京大学": { "単一大学データ" },
+    "早稲田大学（全学部）": { "統合データ" },
+    "慶應義塾大学（全学部）": { "統合データ" },
+    // ... 全23エントリ（21学部別 + 2統合）
   },
   "top_frequent_words": { "頻出単語ランキング" }
 }
 ```
+
+**現在サポート大学**: 早稲田大学（10学部）、慶應義塾大学（10学部）、東京大学（1エントリ）
 
 #### data/university_metadata.json
 - 大学・単語帳の追加情報（色設定、カテゴリ分類など）
@@ -110,10 +149,22 @@ git push origin main
 - セッション状態でページ選択とフィルター設定を保持
 - 大きなデータセットは事前に軽量化してから配信
 
-#### 大学名の一貫性
-- `university_analysis` キーは「大学名_学部名」形式
-- 例：`早稲田大学_法学部`、`早稲田大学_政治経済学部`、`東京大学`
-- サイドバーの選択肢もこの形式で統一
+#### 大学名の一貫性とフィルタリング
+- `university_analysis` キーは「大学名_学部名」形式または「大学名（全学部）」
+- 例：`早稲田大学_法学部`、`慶應義塾大学_医学部`、`早稲田大学（全学部）`、`東京大学`
+- 階層フィルター: 「大学レベル」「学部レベル」「混合選択」の3モード
+- `utils/data_processor.py` の `extract_university_name()` 関数で新大学を追加可能
+
+#### 動的最適単語帳選択システム
+- `get_optimal_vocabulary_for_selection()` 関数で選択大学に応じた最適単語帳を動的計算
+- 重み付きスコア: カバレッジ率70% + 抽出精度30%
+- 単語数による重み付け平均で複数大学の統合計算
+- 学部レベル推定: `estimate_department_vocabulary_coverage()` で大学データから学部データを推定
+
+#### データ重複とカバレッジ率計算の問題解決
+- 複数の慶應学部選択時に同一データによる重複を防ぐため比例配分システムを実装
+- 学部固有の語彙特性を反映する調整係数（カバレッジ70-100%、精度80-120%）
+- 重み付き平均計算で適切なカバレッジ率を維持
 
 #### エラーハンドリング
 - データファイル不在時の適切なエラーメッセージ
@@ -154,9 +205,11 @@ data/analysis_data.json → utils/data_loader.py → streamlit_app.py → 可視
 ### トラブルシューティング
 
 #### よくある問題
-1. **11大学が表示されない**: `data/analysis_data.json` の `university_analysis` キーを確認
+1. **大学データが表示されない**: `data/analysis_data.json` の `university_analysis` キーを確認
 2. **チャートエラー**: matplotlib依存部分のフォールバック確認
 3. **データ更新されない**: Streamlit Cloudのキャッシュクリア、または `@st.cache_data` のttl設定
+4. **複数大学選択時のカバレッジ率異常**: 学部レベル推定機能が正常動作しているか確認
+5. **最適単語帳が更新されない**: `get_optimal_vocabulary_for_selection()` 関数の動作確認
 
 #### デバッグ手法
 - `st.write(data.keys())` でデータ構造確認

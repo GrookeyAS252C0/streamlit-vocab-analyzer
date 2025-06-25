@@ -1,171 +1,80 @@
-# 📚 大学入試英単語分析ダッシュボード
+# 大学入試英単語分析ダッシュボード
 
-OCR処理・LLM校正で抽出した大学入試問題の英単語を、複数の単語帳と比較分析するStreamlitダッシュボードです。
+このStreamlitアプリケーションは、`extraction_results_pure_english.json`ファイルから英語語彙を読み込み、複数の単語帳と比較分析するWebダッシュボードです。
 
-## 🎯 機能
+## 主な機能
 
-### 📊 概要ダッシュボード
-- 全体サマリー統計（総単語数、OCR信頼度、最適単語帳）
-- 単語帳別カバレッジ率・抽出精度比較
-- 大学×単語帳ヒートマップ
-- 最頻出単語ランキング
-- OCR信頼度ゲージ
+- **JSONファイルアップロード**: `extraction_results_pure_english.json`形式のファイルをアップロード（複数ファイル対応）
+- **自動ファイル統合**: 複数のJSONファイルを自動的に統合して一括分析
+- **語彙分析**: 5つの単語帳（Target 1900/1400、システム英単語、LEAP、鉄壁）との比較
+- **可視化**: カバレッジ率、抽出精度のインタラクティブチャート
+- **大学比較**: 複数大学・学部間のパフォーマンス比較
 
-### 🏫 大学別詳細分析
-- 個別大学・学部の詳細データ
-- 単語帳別パフォーマンス比較
-- スタイル付きデータテーブル
-- 棒グラフによる可視化
+## セットアップ
 
-### ⚖️ 比較分析
-- 複数大学のレーダーチャート比較
-- 詳細パフォーマンステーブル
-- カスタムランキング表示
-
-## 🚀 ローカル実行
-
-### 環境セットアップ
 ```bash
-cd streamlit-vocab-analyzer
+# 依存関係インストール
 pip install -r requirements.txt
-```
 
-### アプリ起動
-```bash
+# アプリ起動
 streamlit run streamlit_app.py
 ```
 
-ブラウザで `http://localhost:8501` にアクセス
+## 使用方法
 
-## ☁️ Streamlit Cloud デプロイ
+1. ブラウザでアプリにアクセス
+2. `extraction_results_pure_english.json`ファイルをアップロード（複数ファイル選択可能）
+3. アップロードされたファイル一覧を確認
+4. 「語彙分析を実行」ボタンをクリック
+5. 左サイドバーで分析対象大学・学部を選択
+6. 各タブ（概要分析、大学別詳細、比較分析）で結果を確認
 
-### 1. GitHub リポジトリ作成
-```bash
-# 新しいGitHubリポジトリを作成し、このフォルダをpush
-git init
-git add .
-git commit -m "Initial commit: Streamlit vocab analyzer"
-git remote add origin https://github.com/yourusername/streamlit-vocab-analyzer.git
-git push -u origin main
-```
+### 複数ファイルアップロード
+- ファイル選択時にCtrl+クリック（Windowsの場合）またはCmd+クリック（Macの場合）で複数ファイルを選択
+- アップロードされたファイルは自動的に統合され、一括で分析されます
 
-### 2. Streamlit Cloud デプロイ
-1. [share.streamlit.io](https://share.streamlit.io) にアクセス
-2. GitHubアカウントでログイン
-3. "New app" をクリック
-4. リポジトリ、ブランチ、メインファイル（`streamlit_app.py`）を指定
-5. "Deploy!" をクリック
+## 必要なデータ形式
 
-### 3. 自動デプロイ設定
-- GitHubにpushするたびに自動的にStreamlit Cloudが更新されます
-- 新しい分析結果は `data/analysis_data.json` を更新してpushするだけで反映
+アップロードするJSONファイルは以下の構造が必要です：
 
-## 📂 ファイル構造
-
-```
-streamlit-vocab-analyzer/
-├── streamlit_app.py           # メインアプリケーション
-├── requirements.txt           # 依存関係
-├── README.md                  # このファイル
-├── data/
-│   ├── analysis_data.json     # 分析結果データ（軽量化済み）
-│   └── university_metadata.json # 大学・単語帳メタデータ
-└── utils/
-    ├── data_loader.py         # データ読み込みユーティリティ
-    └── visualizations.py     # 可視化関数
-```
-
-## 🔄 データ更新ワークフロー
-
-### ローカル処理（重い処理）
-```bash
-# 新しいPDFファイルを追加後
-cd /path/to/wordsearch
-python pdf_text_extractor.py
-python vocabulary_analyzer_multi.py
-
-# Streamlit用データ生成
-python utils/data_processor.py
-```
-
-### クラウド更新（軽い処理）
-```bash
-# 生成されたデータをStreamlitリポジトリにコピー
-cp streamlit-vocab-analyzer/data/*.json /path/to/streamlit-repo/data/
-
-# GitHubにpush
-cd /path/to/streamlit-repo
-git add data/
-git commit -m "Update analysis data"
-git push origin main
-```
-
-→ Streamlit Cloudが自動的に更新
-
-## 📊 データ形式
-
-### analysis_data.json
 ```json
 {
-  "metadata": { "生成情報" },
-  "overall_summary": { "全体統計" },
-  "vocabulary_summary": { "単語帳別データ" },
-  "university_analysis": { "大学別データ" },
-  "top_frequent_words": { "頻出単語" }
+  "extraction_summary": {
+    "total_source_files": 2,
+    "total_words_extracted": 1000
+  },
+  "extracted_data": [
+    {
+      "source_file": "大学名_年度_英語_学部名.pdf",
+      "pages_processed": 3,
+      "extracted_words": ["word1", "word2", "word3", ...]
+    }
+  ]
 }
 ```
 
-### university_metadata.json
-```json
-{
-  "universities": { "大学情報" },
-  "vocabulary_books": { "単語帳情報" }
-}
-```
+## 単語帳ファイル
 
-## 🎨 カスタマイズ
+アプリは以下の単語帳CSVファイルを参照します（親ディレクトリに配置）：
+- `target1900.csv`
+- `target1400.csv`
+- `システム英単語.csv`
+- `LEAP.csv`
+- `鉄壁.csv`
 
-### 色設定
-- `utils/visualizations.py` で各チャートの色を変更可能
-- `university_metadata.json` で大学・単語帳の色を設定
+## 指標の説明
 
-### 新しい指標追加
-- `utils/data_loader.py` でデータ処理関数を追加
-- `streamlit_app.py` で表示ロジックを実装
+- **カバレッジ率**: 単語帳の何%の語彙が入試問題に出現したか
+- **抽出精度**: 抽出した語彙の何%が単語帳に含まれるか
+- **一致語数**: 実際に一致した語彙の数
 
-## 🔧 トラブルシューティング
+## 技術スタック
 
-### よくある問題
-1. **データファイルが見つからない**: `data/` フォルダの存在確認
-2. **チャートが表示されない**: Plotlyのバージョン確認
-3. **パフォーマンス低下**: データキャッシュの確認
+- **Streamlit**: Webアプリケーションフレームワーク
+- **Plotly**: インタラクティブ可視化
+- **Pandas**: データ処理・分析
+- **NLTK**: 自然言語処理
 
-### ログ確認
-```bash
-streamlit run streamlit_app.py --logger.level=debug
-```
+## ライセンス
 
-## 📈 パフォーマンス最適化
-
-- データ読み込みに `@st.cache_data` を使用
-- 大きなデータセットは事前に軽量化
-- 不要な再計算を避けるためセッション状態を活用
-
-## 🤝 貢献
-
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 ライセンス
-
-MIT License - 詳細は LICENSE ファイルを参照
-
----
-
-**🔗 関連リンク**
-- [Streamlit Documentation](https://docs.streamlit.io)
-- [Plotly Documentation](https://plotly.com/python/)
-- [元の分析システム](../README.md)
+MIT License

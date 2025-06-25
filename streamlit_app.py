@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 大学入試英単語分析 Streamlit アプリ
-OCR処理結果の可視化・比較分析ダッシュボード
+JSONファイルアップロード・語彙分析ダッシュボード
 """
 
 import streamlit as st
@@ -9,29 +9,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-import sys
-from pathlib import Path
-
-# プロジェクトルートをパスに追加
-sys.path.append(str(Path(__file__).parent))
-
-from utils.data_loader import (
-    load_analysis_data, 
-    load_university_metadata,
-    get_university_list,
-    create_university_dataframe,
-    create_vocabulary_dataframe,
-    calculate_summary_stats,
-    get_optimal_vocabulary_for_selection
-)
-from utils.visualizations import (
-    create_coverage_radar_chart,
-    create_vocabulary_comparison_bar,
-    create_university_heatmap,
-    create_scatter_coverage_precision,
-    create_ocr_confidence_gauge,
-    create_performance_metrics_table
-)
+import json
+import nltk
 
 # ページ設定
 st.set_page_config(
@@ -69,100 +48,143 @@ st.markdown("""
 def main():
     """メイン関数"""
     
-    # データ読み込み
-    data = load_analysis_data()
-    metadata = load_university_metadata()
-    
-    if not data:
-        st.error("データの読み込みに失敗しました。")
-        return
-    
     # メインタイトル
     st.markdown('<div class="main-header">📚 大学入試英単語分析ダッシュボード</div>', unsafe_allow_html=True)
-    st.markdown("**フィルターで大学を選択後、各タブで詳細分析をご覧ください**")
+    st.markdown("**JSONファイルをアップロードして語彙分析を実行してください**")
     
-    # サイドバー
-    setup_sidebar(data, metadata)
+    # ファイルアップロードエリア
+    uploaded_files = st.file_uploader(
+        "extraction_results_pure_english.json ファイルを選択（複数選択可能）",
+        type=["json"],
+        accept_multiple_files=True,
+        help="OCR処理済みの英語抽出結果JSONファイルをアップロードしてください。複数ファイルを統合して分析します。"
+    )
     
-    # メインコンテンツ（タブ形式で統合）
-    show_integrated_dashboard(data, metadata)
+    if uploaded_files:
+        try:
+            # 複数ファイルの内容を統合
+            combined_data = merge_multiple_json_files(uploaded_files)
+            
+            if combined_data:
+                st.success(f"✅ {len(uploaded_files)}個のファイルを正常に読み込みました")
+                
+                # ファイル一覧表示
+                with st.expander("📁 アップロードされたファイル", expanded=False):
+                    for i, file in enumerate(uploaded_files, 1):
+                        st.write(f"{i}. {file.name}")
+                
+                # 分析実行ボタン
+                if st.button("📊 語彙分析を実行", type="primary"):
+                    with st.spinner("語彙分析を実行中..."):
+                        analysis_data = perform_vocabulary_analysis(combined_data)
+                        st.session_state.analysis_data = analysis_data
+                        st.success("✅ 語彙分析が完了しました！")
+                        st.rerun()
+                
+                # 分析結果の表示
+                if 'analysis_data' in st.session_state:
+                    show_analysis_dashboard(st.session_state.analysis_data)
+            else:
+                st.error("❌ ファイルの読み込みに失敗しました")
+                
+        except json.JSONDecodeError:
+            st.error("❌ JSONファイルの形式が正しくありません")
+        except Exception as e:
+            st.error(f"❌ ファイル読み込みエラー: {str(e)}")
+    else:
+        st.info("""
+        👆 **extraction_results_pure_english.json ファイルをアップロードしてください**
+        
+        📋 必要なファイル形式:
+        - OCR処理済みの英語抽出結果
+        - extracted_data セクションに各大学・学部のデータ
+        - pure_english_text と extracted_words を含む
+        """)
 
-def setup_sidebar(data: dict, metadata: dict):
-    """サイドバーの設定"""
-    st.sidebar.title("📊 フィルター・設定")
+def merge_multiple_json_files(uploaded_files):
+    """複数のJSONファイルを統合"""
+    try:
+        combined_data = {
+            'extraction_summary': {
+                'total_source_files': 0,
+                'total_words_extracted': 0
+            },
+            'extracted_data': []
+        }
+        
+        for uploaded_file in uploaded_files:
+            # ファイルポインタを先頭に戻す
+            uploaded_file.seek(0)
+            file_content = json.load(uploaded_file)
+            
+            # サマリー情報を統合
+            file_summary = file_content.get('extraction_summary', {})
+            combined_data['extraction_summary']['total_source_files'] += file_summary.get('total_source_files', 0)
+            combined_data['extraction_summary']['total_words_extracted'] += file_summary.get('total_words_extracted', 0)
+            
+            # 抽出データを統合
+            file_extracted_data = file_content.get('extracted_data', [])
+            combined_data['extracted_data'].extend(file_extracted_data)
+        
+        return combined_data
+        
+    except Exception as e:
+        st.error(f"ファイル統合中にエラーが発生しました: {str(e)}")
+        return None
+
+@st.cache_data
+def load_vocabulary_books():
+    """単語帳データを読み込み"""
+    try:
+        vocab_data = {}
+        vocab_files = {
+            'Target 1900': '/Users/takashikemmoku/Desktop/analysisdashboard/target1900.csv',
+            'Target 1400': '/Users/takashikemmoku/Desktop/analysisdashboard/target1400.csv',
+            'システム英単語': '/Users/takashikemmoku/Desktop/analysisdashboard/システム英単語.csv',
+            'LEAP': '/Users/takashikemmoku/Desktop/analysisdashboard/LEAP.csv',
+            '鉄壁': '/Users/takashikemmoku/Desktop/analysisdashboard/鉄壁.csv'
+        }
+        
+        for name, filepath in vocab_files.items():
+            try:
+                if name == 'Target 1900':
+                    df = pd.read_csv(filepath, encoding='utf-8-sig')
+                    vocab_data[name] = set(df['word'].str.lower().dropna())
+                elif name == 'Target 1400':
+                    df = pd.read_csv(filepath, encoding='utf-8-sig')
+                    vocab_data[name] = set(df['単語'].str.lower().dropna())
+                else:
+                    df = pd.read_csv(filepath, encoding='utf-8-sig')
+                    vocab_data[name] = set(df['英語'].str.lower().dropna())
+            except Exception as e:
+                st.warning(f"単語帳 '{name}' の読み込みに失敗: {str(e)}")
+                vocab_data[name] = set()
+        
+        return vocab_data
+    except Exception as e:
+        st.error(f"単語帳データの読み込みに失敗: {str(e)}")
+        return {}
+
+def setup_analysis_sidebar(analysis_data):
+    """分析用サイドバーの設定"""
+    st.sidebar.title("📊 分析設定")
     
-    # フィルター設定
-    st.sidebar.subheader("🔍 フィルター")
-    
-    # カバレッジ率閾値（先に設定）
-    min_coverage = st.sidebar.slider(
-        "最小カバレッジ率 (%)",
-        min_value=0.0,
-        max_value=50.0,
-        value=0.0,
-        step=1.0,
-        help="この値より低いカバレッジ率の大学は表示されません"
-    )
-    st.session_state.min_coverage = min_coverage
-    
-    # 階層フィルター設定
-    st.sidebar.subheader("📊 表示レベル")
-    display_mode = st.sidebar.radio(
-        "選択モード",
-        ["大学レベル（統合）", "学部レベル（詳細）", "混合選択"],
-        help="大学レベル：統合データ+単一大学、学部レベル：学部別データ、混合：全て自由選択"
-    )
-    
-    # 大学選択
-    all_universities = get_university_list(data)
-    if not all_universities:
-        st.sidebar.error("大学データが見つかりません")
-        st.sidebar.write("デバッグ情報:", list(data.keys()))
-        return
-    
-    # 選択モードに応じて選択肢をフィルタリング
-    if display_mode == "大学レベル（統合）":
-        # 統合データ + 単一大学データ（学部が複数ない大学）を表示
-        universities = []
-        for univ in all_universities:
-            if "（全学部）" in univ:
-                # 統合データは含める
-                universities.append(univ)
-            elif "_" not in univ:
-                # 学部が分かれていない単一大学（東京大学など）も含める
-                universities.append(univ)
-        help_text = "大学レベルでの比較（統合データ + 単一大学）"
-    elif display_mode == "学部レベル（詳細）":
-        # 学部別データのみ表示（統合データは除外）
-        universities = [univ for univ in all_universities if "（全学部）" not in univ]
-        help_text = "学部別の詳細データで比較"
-    else:  # 混合選択
-        # 全てのデータを表示
-        universities = all_universities
-        help_text = "大学統合データと学部別データを自由に組み合わせて比較"
-    
-    # カバレッジ率フィルタリングを適用
-    if min_coverage > 0:
-        from utils.data_loader import filter_universities_by_criteria
-        universities = [univ for univ in universities if univ in filter_universities_by_criteria(data, min_coverage)]
-    
-    # デバッグ情報表示
-    mode_label = {"大学レベル（統合）": "大学", "学部レベル（詳細）": "学部", "混合選択": "全て"}[display_mode]
-    st.sidebar.write(f"{mode_label}: {len(universities)} | 全体: {len(all_universities)}")
-    if min_coverage > 0:
-        st.sidebar.write(f"フィルター条件: カバレッジ率 ≥ {min_coverage}%")
+    # 分析対象選択
+    st.sidebar.subheader("🏫 分析対象")
+    available_universities = list(analysis_data.get('university_analysis', {}).keys())
     
     selected_universities = st.sidebar.multiselect(
-        "🏫 大学・学部を選択",
-        universities,
-        default=[],
-        help=help_text
+        "大学・学部を選択",
+        available_universities,
+        default=available_universities[:3] if len(available_universities) >= 3 else available_universities,
+        help="比較分析する大学・学部を選択してください"
     )
+    
     st.session_state.selected_universities = selected_universities
     
     st.sidebar.markdown("---")
     
-    # 簡潔な指標説明
+    # 指標説明
     st.sidebar.subheader("💡 指標の意味")
     st.sidebar.markdown("""
     **カバレッジ率**: 単語帳の何%が入試に出現
@@ -172,47 +194,145 @@ def setup_sidebar(data: dict, metadata: dict):
     **一致語数**: 実際に一致した語数
     """)
     
-    # 低カバレッジ率の説明
-    if min_coverage == 0:
-        st.sidebar.info("""
-        📌 **注意**: カバレッジ率は大学・学部により9.6-16.9%の範囲で変動します。
-        これは出題傾向や問題形式の違いによるものです。
-        """)
-    
-    # フィルタリングされた大学への説明
-    if len(universities) < len(all_universities):
-        hidden_count = len(all_universities) - len(universities)
-        st.sidebar.warning(f"""
-        ⚠️ {hidden_count}大学がフィルターで非表示です。
-        すべての大学を表示するには、カバレッジ率を0%に設定してください。
-        """)
-    
-    st.sidebar.markdown("---")
-    
     # データ情報
     st.sidebar.subheader("📋 データ情報")
-    overall_summary = data.get('overall_summary', {})
-    st.sidebar.write(f"**分析日時**: {overall_summary.get('analysis_timestamp', 'N/A')[:10]}")
-    st.sidebar.write(f"**大学数**: {len(universities)}")
+    overall_summary = analysis_data.get('overall_summary', {})
+    st.sidebar.write(f"**総大学数**: {len(available_universities)}")
     st.sidebar.write(f"**単語帳数**: 5種類")
     st.sidebar.write(f"**総単語数**: {overall_summary.get('total_words_extracted', 0):,}")
 
-def show_integrated_dashboard(data: dict, metadata: dict):
-    """統合ダッシュボード（タブ形式）"""
+def perform_vocabulary_analysis(extraction_data):
+    """JSONデータから語彙分析を実行"""
+    try:
+        # NLTK データダウンロード
+        try:
+            nltk.download('punkt', quiet=True)
+            nltk.download('stopwords', quiet=True)
+            nltk.download('wordnet', quiet=True)
+            nltk.download('averaged_perceptron_tagger', quiet=True)
+        except:
+            pass
+        
+        # 単語帳データ読み込み
+        vocab_books = load_vocabulary_books()
+        if not vocab_books:
+            st.error("単語帳データの読み込みに失敗しました")
+            return None
+        
+        # 分析結果の初期化
+        analysis_result = {
+            'overall_summary': {
+                'total_source_files': extraction_data.get('extraction_summary', {}).get('total_source_files', 0),
+                'total_words_extracted': extraction_data.get('extraction_summary', {}).get('total_words_extracted', 0),
+                'analysis_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            },
+            'vocabulary_summary': {},
+            'university_analysis': {}
+        }
+        
+        # 各大学・学部のデータを分析
+        for entry in extraction_data.get('extracted_data', []):
+            source_file = entry.get('source_file', '')
+            university_name = extract_university_name_from_filename(source_file)
+            
+            # 抽出された単語を正規化
+            extracted_words = entry.get('extracted_words', [])
+            normalized_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
+            unique_words = list(set(normalized_words))
+            
+            # 各単語帳との比較分析
+            vocab_coverage = {}
+            for vocab_name, vocab_set in vocab_books.items():
+                matched_words = [word for word in unique_words if word in vocab_set]
+                matched_count = len(matched_words)
+                
+                target_coverage_rate = (matched_count / len(vocab_set)) * 100 if vocab_set else 0
+                extraction_precision = (matched_count / len(unique_words)) * 100 if unique_words else 0
+                
+                vocab_coverage[vocab_name] = {
+                    'matched_words_count': matched_count,
+                    'target_coverage_rate': target_coverage_rate,
+                    'extraction_precision': extraction_precision,
+                    'matched_words': matched_words[:20]  # 最初の20語のみ保存
+                }
+            
+            # 大学データを保存
+            analysis_result['university_analysis'][university_name] = {
+                'source_file': source_file,
+                'total_words': len(extracted_words),
+                'unique_words': len(unique_words),
+                'vocabulary_coverage': vocab_coverage,
+                'pages_processed': entry.get('pages_processed', 0)
+            }
+        
+        # 全体サマリーの計算
+        all_coverage_data = {vocab_name: [] for vocab_name in vocab_books.keys()}
+        for univ_data in analysis_result['university_analysis'].values():
+            for vocab_name in vocab_books.keys():
+                coverage = univ_data['vocabulary_coverage'][vocab_name]
+                all_coverage_data[vocab_name].append({
+                    'coverage_rate': coverage['target_coverage_rate'],
+                    'precision': coverage['extraction_precision'],
+                    'matched_count': coverage['matched_words_count']
+                })
+        
+        # 語彙サマリーの計算
+        for vocab_name, coverage_list in all_coverage_data.items():
+            if coverage_list:
+                avg_coverage = sum(item['coverage_rate'] for item in coverage_list) / len(coverage_list)
+                avg_precision = sum(item['precision'] for item in coverage_list) / len(coverage_list)
+                total_matched = sum(item['matched_count'] for item in coverage_list)
+                
+                analysis_result['vocabulary_summary'][vocab_name] = {
+                    'average_coverage_rate': avg_coverage,
+                    'average_extraction_precision': avg_precision,
+                    'total_matched_words': total_matched
+                }
+        
+        return analysis_result
+        
+    except Exception as e:
+        st.error(f"語彙分析中にエラーが発生しました: {str(e)}")
+        return None
+
+def extract_university_name_from_filename(filename):
+    """ファイル名から大学・学部名を抽出"""
+    if not filename:
+        return "不明な大学"
+    
+    # PDFファイル名の例: "慶應義塾大学_2024年度_英語_薬学部.pdf"
+    parts = filename.replace('.pdf', '').split('_')
+    if len(parts) >= 4:
+        university = parts[0]
+        department = parts[3]
+        return f"{university}_{department}"
+    elif len(parts) >= 1:
+        return parts[0]
+    
+    return filename.replace('.pdf', '')
+
+def show_analysis_dashboard(analysis_data):
+    """分析結果ダッシュボードの表示"""
+    if not analysis_data:
+        st.error("分析データがありません")
+        return
+    
+    # サイドバー設定
+    setup_analysis_sidebar(analysis_data)
     
     # メインタブの作成
-    tab1, tab2, tab3 = st.tabs(["🏠 概要分析", "🏫 大学別詳細", "⚖️ 比較分析"])
+    tab1, tab2, tab3 = st.tabs(["🏠 概要分析", "🏫 大学別詳細", "📊 比較分析"])
     
     with tab1:
-        show_overview_content(data, metadata)
+        show_overview_analysis(analysis_data)
     
     with tab2:
-        show_university_content(data, metadata)
+        show_university_analysis(analysis_data)
     
     with tab3:
-        show_comparison_content(data, metadata)
+        show_comparison_analysis(analysis_data)
 
-def show_overview_content(data: dict, metadata: dict):
+def show_overview_analysis(analysis_data: dict):
     """概要分析タブのコンテンツ"""
     
     # 簡潔な定義（常時表示）
@@ -227,42 +347,6 @@ def show_overview_content(data: dict, metadata: dict):
         st.info("""
         **🎯 抽出精度とは？**  
         抽出した単語のうち、単語帳に含まれる割合。高いほど学習効率が良い。
-        """)
-    
-    # 詳細な指標の説明
-    with st.expander("📖 詳しい指標の意味を確認する", expanded=False):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("""
-            ### 📈 **カバレッジ率 (Coverage Rate)**
-            **定義**: 単語帳の何%の語彙が実際の入試問題に出現したか
-            
-            **計算式**: `一致語数 ÷ 単語帳総語数 × 100`
-            
-            **例**: Target 1900の24.25% = 460語 ÷ 1,897語 × 100
-            
-            **意味**: その単語帳の**実用性・入試適合度**を表す
-            - 高いほど入試で頻出する語彙を多く含む
-            - 受験対策での効率性の指標
-            """)
-        
-        with col2:
-            st.markdown("""
-            ### 🎯 **抽出精度 (Extraction Precision)**
-            **定義**: 抽出した単語のうち、単語帳に含まれる割合
-            
-            **計算式**: `一致語数 ÷ 抽出ユニーク語数 × 100`
-            
-            **例**: Target 1900の26.96% = 460語 ÷ 1,706語 × 100
-            
-            **意味**: その単語帳で学習する**効率性**を表す
-            - 高いほど学んだ単語が入試に出やすい
-            - 学習投資対効果の指標
-            """)
-        
-        st.info("""
-        💡 **理想的な単語帳**: 高カバレッジ率 + 高抽出精度 = 効率的な受験対策
         """)
     
     st.markdown("---")
@@ -516,7 +600,7 @@ def show_overview_content(data: dict, metadata: dict):
         else:
             st.warning("選択された大学の最適単語帳データを取得できませんでした。")
 
-def show_university_content(data: dict, metadata: dict):
+def show_university_analysis(analysis_data: dict):
     """大学別詳細タブのコンテンツ"""
     
     # 簡潔な指標説明
@@ -640,7 +724,7 @@ def show_university_content(data: dict, metadata: dict):
             fig_precision.update_layout(height=400)
             st.plotly_chart(fig_precision, use_container_width=True)
 
-def show_comparison_content(data: dict, metadata: dict):
+def show_comparison_analysis(analysis_data: dict):
     """比較分析タブのコンテンツ"""
     
     # 簡潔な指標説明
