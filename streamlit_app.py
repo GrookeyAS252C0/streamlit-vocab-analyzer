@@ -257,6 +257,107 @@ def setup_analysis_sidebar(analysis_data):
     if exclude_basic:
         st.sidebar.write(f"**分析モード**: 高度語彙のみ")
 
+def recalculate_vocabulary_analysis_with_basic_exclusion(analysis_data, exclude_basic_vocab=False):
+    """基礎語彙除外オプションに基づいて語彙分析を再計算"""
+    if not exclude_basic_vocab:
+        return analysis_data
+    
+    # 基礎語彙データを取得
+    from vocab_data import get_embedded_vocabulary_data
+    vocab_books = get_embedded_vocabulary_data()
+    basic_vocab = vocab_books.get('Target 1200', set())
+    
+    # 分析データをコピー
+    recalculated_data = {
+        'overall_summary': analysis_data.get('overall_summary', {}),
+        'vocabulary_summary': {},
+        'university_analysis': {}
+    }
+    
+    # 各大学のデータを基礎語彙除外で再計算
+    university_analysis = analysis_data.get('university_analysis', {})
+    
+    for univ_name, univ_data in university_analysis.items():
+        # 元の抽出語彙から基礎語彙を除外
+        original_vocab_coverage = univ_data.get('vocabulary_coverage', {})
+        
+        # 各単語帳に対して再計算
+        new_vocab_coverage = {}
+        
+        # 全単語帳のmatched_wordsとunmatched_wordsを組み合わせて元の抽出語彙を復元
+        all_extracted_words = set()
+        for vocab_name, coverage in original_vocab_coverage.items():
+            # 各単語帳のマッチした単語を追加
+            all_extracted_words.update(coverage.get('matched_words', []))
+            # unmatched_wordsはその単語帳にない単語なので、どれか一つから取得すれば十分
+        
+        # unmatched_wordsは重複している可能性があるので、一つの単語帳から取得
+        if 'Target 1900' in original_vocab_coverage:
+            all_extracted_words.update(original_vocab_coverage['Target 1900'].get('unmatched_words', []))
+        
+        # 基礎語彙を除外（元の語彙数と除外後の数を記録）
+        original_count = len(all_extracted_words)
+        filtered_words = [word for word in all_extracted_words if word not in basic_vocab]
+        excluded_count = original_count - len(filtered_words)
+        
+        # 各単語帳との再比較
+        for vocab_name, vocab_set in vocab_books.items():
+            matched_words = [word for word in filtered_words if word in vocab_set]
+            matched_count = len(matched_words)
+            
+            target_coverage_rate = (matched_count / len(vocab_set)) * 100 if vocab_set else 0
+            extraction_precision = (matched_count / len(filtered_words)) * 100 if filtered_words else 0
+            
+            unmatched_words = [word for word in filtered_words if word not in vocab_set]
+            
+            new_vocab_coverage[vocab_name] = {
+                'matched_words_count': matched_count,
+                'target_coverage_rate': target_coverage_rate,
+                'extraction_precision': extraction_precision,
+                'matched_words': matched_words[:20],
+                'unmatched_words': unmatched_words,
+                'unmatched_count': len(unmatched_words)
+            }
+        
+        # 大学データを更新
+        recalculated_data['university_analysis'][univ_name] = {
+            'source_file': univ_data.get('source_file', ''),
+            'total_words': univ_data.get('total_words', 0),
+            'unique_words': len(filtered_words),  # 基礎語彙除外後の語彙数
+            'original_unique_words': original_count,  # 元の語彙数
+            'excluded_basic_words': excluded_count,  # 除外された基礎語彙数
+            'vocabulary_coverage': new_vocab_coverage,
+            'pages_processed': univ_data.get('pages_processed', 0),
+            'basic_vocab_excluded': True  # 除外フラグ
+        }
+    
+    # 全体サマリーを再計算
+    if recalculated_data['university_analysis']:
+        vocab_summary = {}
+        
+        for vocab_name in vocab_books.keys():
+            coverage_rates = []
+            precisions = []
+            total_matched = 0
+            
+            for univ_data in recalculated_data['university_analysis'].values():
+                vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+                if vocab_coverage:
+                    coverage_rates.append(vocab_coverage.get('target_coverage_rate', 0))
+                    precisions.append(vocab_coverage.get('extraction_precision', 0))
+                    total_matched += vocab_coverage.get('matched_words_count', 0)
+            
+            if coverage_rates:
+                vocab_summary[vocab_name] = {
+                    'average_coverage_rate': sum(coverage_rates) / len(coverage_rates),
+                    'average_extraction_precision': sum(precisions) / len(precisions),
+                    'total_matched_words': total_matched
+                }
+        
+        recalculated_data['vocabulary_summary'] = vocab_summary
+    
+    return recalculated_data
+
 def filter_analysis_data_by_selection(analysis_data, selected_universities):
     """選択された大学のデータのみでフィルタリングした分析結果を作成"""
     if not selected_universities:
@@ -580,12 +681,19 @@ def show_analysis_dashboard(analysis_data):
     # サイドバー設定
     setup_analysis_sidebar(analysis_data)
     
+    # 基礎語彙除外オプションの確認
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+    
+    # 基礎語彙除外が有効な場合、データを再計算
+    if exclude_basic:
+        with st.spinner("基礎語彙除外モードで再計算中..."):
+            analysis_data = recalculate_vocabulary_analysis_with_basic_exclusion(analysis_data, exclude_basic_vocab=True)
+    
     # 選択された大学に基づいてデータをフィルタリング
     selected_universities = st.session_state.get('selected_universities', [])
     filtered_data = filter_analysis_data_by_selection(analysis_data, selected_universities)
     
     # 選択変更時の通知
-    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
     if st.session_state.get('selection_changed', False):
         mode_text = "（高度語彙のみ）" if exclude_basic else "（全語彙）"
         st.info(f"🔄 {len(selected_universities)}大学・学部の分析結果を表示中... {mode_text}")
@@ -593,6 +701,11 @@ def show_analysis_dashboard(analysis_data):
     # 分析モードの表示
     if exclude_basic:
         st.success("🎯 **高度語彙分析モード**: Target 1200の基礎語彙を除外した分析結果を表示しています")
+        st.caption("💡 カバレッジ率と抽出精度は、Target 1200の1,400語を除外した高度語彙で再計算されています")
+        
+        # 基礎語彙除外統計の表示
+        show_basic_exclusion_stats(filtered_data)
+        
     else:
         st.info("📊 **標準分析モード**: 全語彙を含む分析結果を表示しています")
     
@@ -607,6 +720,62 @@ def show_analysis_dashboard(analysis_data):
     
     with tab3:
         show_comparison_analysis(filtered_data)
+
+def show_basic_exclusion_stats(analysis_data: dict):
+    """基礎語彙除外の統計情報を表示"""
+    university_analysis = analysis_data.get('university_analysis', {})
+    
+    if not university_analysis:
+        return
+    
+    # 統計情報を集計
+    total_original = 0
+    total_excluded = 0
+    total_remaining = 0
+    
+    for univ_data in university_analysis.values():
+        if univ_data.get('basic_vocab_excluded', False):
+            total_original += univ_data.get('original_unique_words', 0)
+            total_excluded += univ_data.get('excluded_basic_words', 0)
+            total_remaining += univ_data.get('unique_words', 0)
+    
+    if total_original > 0:
+        exclusion_rate = (total_excluded / total_original) * 100
+        
+        st.markdown("### 🔧 基礎語彙除外統計")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric(
+                "📊 元の語彙数",
+                f"{total_original:,}語",
+                help="基礎語彙除外前の総ユニーク語彙数"
+            )
+        
+        with col2:
+            st.metric(
+                "❌ 除外された語彙",
+                f"{total_excluded:,}語",
+                delta=f"-{exclusion_rate:.1f}%",
+                help="Target 1200に含まれる基礎語彙数"
+            )
+        
+        with col3:
+            st.metric(
+                "✅ 高度語彙数",
+                f"{total_remaining:,}語",
+                help="基礎語彙除外後の高度語彙数"
+            )
+        
+        with col4:
+            st.metric(
+                "🎯 高度語彙率",
+                f"{100-exclusion_rate:.1f}%",
+                help="全語彙に占める高度語彙の割合"
+            )
+        
+        st.markdown("---")
 
 def show_overview_analysis(analysis_data: dict):
     """概要分析タブのコンテンツ"""
@@ -630,13 +799,13 @@ def show_overview_analysis(analysis_data: dict):
     with col3:
         if exclude_basic:
             st.warning("""
-            **🔧 高度語彙モード**  
-            Target 1200の基礎語彙を除外し、より高度な語彙のみを分析中。
+            **🎯 高度語彙分析モード**  
+            Target 1200の基礎語彙（1,400語）を除外し、高度語彙のみでカバレッジ率と抽出精度を再計算。
             """)
         else:
             st.info("""
             **📊 標準分析モード**  
-            全語彙を含む標準的な分析を実行中。
+            全語彙を含む標準的な分析。
             """)
     
     st.markdown("---")
