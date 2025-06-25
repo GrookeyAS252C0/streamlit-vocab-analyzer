@@ -141,12 +141,16 @@ def load_vocabulary_books():
     """単語帳データを読み込み"""
     try:
         vocab_data = {}
+        # 親ディレクトリの単語帳ファイルを参照
+        import os
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
         vocab_files = {
-            'Target 1900': '/Users/takashikemmoku/Desktop/analysisdashboard/target1900.csv',
-            'Target 1400': '/Users/takashikemmoku/Desktop/analysisdashboard/target1400.csv',
-            'システム英単語': '/Users/takashikemmoku/Desktop/analysisdashboard/システム英単語.csv',
-            'LEAP': '/Users/takashikemmoku/Desktop/analysisdashboard/LEAP.csv',
-            '鉄壁': '/Users/takashikemmoku/Desktop/analysisdashboard/鉄壁.csv'
+            'Target 1900': os.path.join(parent_dir, 'target1900.csv'),
+            'Target 1400': os.path.join(parent_dir, 'target1400.csv'),
+            'システム英単語': os.path.join(parent_dir, 'システム英単語.csv'),
+            'LEAP': os.path.join(parent_dir, 'LEAP.csv'),
+            '鉄壁': os.path.join(parent_dir, '鉄壁.csv')
         }
         
         for name, filepath in vocab_files.items():
