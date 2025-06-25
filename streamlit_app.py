@@ -448,11 +448,16 @@ def perform_vocabulary_analysis(extraction_data):
                     target_coverage_rate = (matched_count / len(vocab_set)) * 100 if vocab_set else 0
                     extraction_precision = (matched_count / len(unique_words)) * 100 if unique_words else 0
                     
+                    # カバーされていない単語（単語帳にない単語）
+                    unmatched_words = [word for word in unique_words if word not in vocab_set]
+                    
                     vocab_coverage[vocab_name] = {
                         'matched_words_count': matched_count,
                         'target_coverage_rate': target_coverage_rate,
                         'extraction_precision': extraction_precision,
-                        'matched_words': matched_words[:20]  # 最初の20語のみ保存
+                        'matched_words': matched_words[:20],  # 最初の20語のみ保存
+                        'unmatched_words': unmatched_words[:50],  # カバーされていない単語（最初の50語）
+                        'unmatched_count': len(unmatched_words)
                     }
             
                 # 大学データを保存
@@ -697,6 +702,73 @@ def show_overview_analysis(analysis_data: dict):
                 }),
                 use_container_width=True
             )
+        
+        # カバーされていない単語の統計
+        st.markdown("---")
+        st.subheader("📝 カバー外語彙の統計")
+        st.info("""
+        各単語帳でカバーされていない語彙の統計情報です。これらは追加学習対象となる可能性があります。
+        """)
+        
+        # 選択された大学のカバー外語彙統計を計算
+        selected_universities = st.session_state.get('selected_universities', [])
+        university_analysis = analysis_data.get('university_analysis', {})
+        
+        if selected_universities and university_analysis:
+            uncovered_stats = []
+            
+            for vocab_name in vocabulary_summary.keys():
+                total_unmatched = 0
+                total_words = 0
+                
+                for univ_name in selected_universities:
+                    univ_data = university_analysis.get(univ_name, {})
+                    vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+                    
+                    total_unmatched += vocab_coverage.get('unmatched_count', 0)
+                    total_words += univ_data.get('unique_words', 0)
+                
+                if total_words > 0:
+                    uncovered_rate = (total_unmatched / len(selected_universities) / total_words * len(selected_universities)) * 100
+                    uncovered_stats.append({
+                        '単語帳': vocab_name,
+                        'カバー外語数': total_unmatched // len(selected_universities),
+                        'カバー外率(%)': round(uncovered_rate, 1)
+                    })
+            
+            if uncovered_stats:
+                uncovered_df = pd.DataFrame(uncovered_stats)
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # カバー外語数の棒グラフ
+                    fig_uncovered = px.bar(
+                        uncovered_df,
+                        x='単語帳',
+                        y='カバー外語数',
+                        title='単語帳別カバー外語数',
+                        color='カバー外語数',
+                        color_continuous_scale='Reds'
+                    )
+                    fig_uncovered.update_layout(height=400)
+                    st.plotly_chart(fig_uncovered, use_container_width=True)
+                
+                with col2:
+                    # カバー外率の棒グラフ
+                    fig_uncovered_rate = px.bar(
+                        uncovered_df,
+                        x='単語帳',
+                        y='カバー外率(%)',
+                        title='単語帳別カバー外率',
+                        color='カバー外率(%)',
+                        color_continuous_scale='OrRd'
+                    )
+                    fig_uncovered_rate.update_layout(height=400)
+                    st.plotly_chart(fig_uncovered_rate, use_container_width=True)
+                
+                # 統計テーブル
+                st.dataframe(uncovered_df, use_container_width=True)
 
 def show_university_analysis(analysis_data: dict):
     """大学別詳細タブのコンテンツ"""
@@ -815,6 +887,62 @@ def show_university_analysis(analysis_data: dict):
             )
             fig_precision.update_layout(height=400)
             st.plotly_chart(fig_precision, use_container_width=True)
+    
+    # カバーされていない単語の表示
+    st.markdown("---")
+    st.subheader("📝 単語帳でカバーされていない語彙")
+    st.info("""
+    以下は入試問題から抽出されたが、各単語帳には含まれていない語彙です。  
+    これらの語彙は追加学習が必要な可能性があります。
+    """)
+    
+    # 単語帳選択
+    vocab_tabs = st.tabs([f"📖 {vocab_name}" for vocab_name in vocab_coverage.keys()])
+    
+    for i, (vocab_name, vocab_stats) in enumerate(vocab_coverage.items()):
+        with vocab_tabs[i]:
+            unmatched_words = vocab_stats.get('unmatched_words', [])
+            unmatched_count = vocab_stats.get('unmatched_count', 0)
+            matched_count = vocab_stats.get('matched_words_count', 0)
+            
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                st.metric(
+                    label="カバー外語数",
+                    value=f"{unmatched_count:,}語",
+                    delta=f"一致: {matched_count}語"
+                )
+                
+                if unmatched_count > 0:
+                    coverage_ratio = (matched_count / (matched_count + unmatched_count)) * 100
+                    st.write(f"**語彙カバー率**: {coverage_ratio:.1f}%")
+            
+            with col2:
+                if unmatched_words:
+                    st.write("**カバーされていない主な語彙:**")
+                    
+                    # 単語を5個ずつの行に分けて表示
+                    displayed_words = unmatched_words[:30]  # 最初の30語を表示
+                    for j in range(0, len(displayed_words), 5):
+                        word_group = displayed_words[j:j+5]
+                        st.write("• " + " • ".join(word_group))
+                    
+                    if len(unmatched_words) > 30:
+                        st.write(f"... 他 {len(unmatched_words) - 30}語")
+                    
+                    # 詳細表示のエクスパンダー
+                    if len(unmatched_words) > 10:
+                        with st.expander(f"全 {len(unmatched_words)}語を表示"):
+                            all_words_text = " • ".join(unmatched_words)
+                            st.text_area(
+                                "カバーされていない全語彙",
+                                value=all_words_text,
+                                height=200,
+                                key=f"unmatched_{vocab_name}_{selected_university}"
+                            )
+                else:
+                    st.success("🎉 すべての語彙がカバーされています！")
 
 def show_comparison_analysis(analysis_data: dict):
     """比較分析タブのコンテンツ"""
