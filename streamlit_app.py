@@ -203,20 +203,38 @@ def setup_analysis_sidebar(analysis_data):
 def perform_vocabulary_analysis(extraction_data):
     """JSONデータから語彙分析を実行"""
     try:
+        st.write("🔄 分析開始...")
+        
         # NLTK データダウンロード
         try:
             nltk.download('punkt', quiet=True)
             nltk.download('stopwords', quiet=True)
             nltk.download('wordnet', quiet=True)
             nltk.download('averaged_perceptron_tagger', quiet=True)
-        except:
-            pass
+        except Exception as e:
+            st.warning(f"NLTK データダウンロード警告: {str(e)}")
         
         # 単語帳データ読み込み
+        st.write("📚 単語帳データ読み込み中...")
         vocab_books = load_vocabulary_books()
         if not vocab_books:
             st.error("単語帳データの読み込みに失敗しました")
             return None
+        st.success(f"✅ {len(vocab_books)}個の単語帳を読み込み完了")
+        
+        # 入力データの検証
+        st.write("📋 入力データの検証中...")
+        if not extraction_data:
+            st.error("❌ extraction_data が空です")
+            return None
+        
+        st.write(f"extraction_data keys: {list(extraction_data.keys())}")
+        extracted_data_list = extraction_data.get('extracted_data', [])
+        if not extracted_data_list:
+            st.error("❌ extracted_data リストが空です")
+            return None
+        
+        st.success(f"✅ {len(extracted_data_list)}件のデータエントリを確認")
         
         # 分析結果の初期化
         analysis_result = {
@@ -230,27 +248,36 @@ def perform_vocabulary_analysis(extraction_data):
         }
         
         # 各大学・学部のデータを分析
-        extracted_data_list = extraction_data.get('extracted_data', [])
-        st.info(f"処理対象: {len(extracted_data_list)}件のデータエントリ")
+        st.write("🏫 大学・学部データの分析開始...")
         
         for i, entry in enumerate(extracted_data_list):
-            source_file = entry.get('source_file', '')
-            university_name = extract_university_name_from_filename(source_file)
-            
-            # 抽出された単語を正規化
-            extracted_words = entry.get('extracted_words', [])
-            normalized_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
-            unique_words = list(set(normalized_words))
-            
-            st.write(f"処理中 {i+1}/{len(extracted_data_list)}: {university_name} ({len(extracted_words)}語)")
-            st.write(f"  - source_file: '{source_file}'")
-            st.write(f"  - university_name: '{university_name}'")
-            st.write(f"  - normalized_words: {len(normalized_words)}")
-            st.write(f"  - unique_words: {len(unique_words)}")
-            
-            # 各単語帳との比較分析
-            vocab_coverage = {}
-            for vocab_name, vocab_set in vocab_books.items():
+            try:
+                st.write(f"--- エントリ {i+1}/{len(extracted_data_list)} の処理 ---")
+                
+                source_file = entry.get('source_file', '')
+                if not source_file:
+                    st.warning(f"⚠️ エントリ {i+1}: source_file が空です")
+                    continue
+                
+                university_name = extract_university_name_from_filename(source_file)
+                if not university_name or university_name == "不明な大学":
+                    st.warning(f"⚠️ エントリ {i+1}: 大学名抽出に失敗 - '{source_file}'")
+                    continue
+                
+                # 抽出された単語を正規化
+                extracted_words = entry.get('extracted_words', [])
+                if not extracted_words:
+                    st.warning(f"⚠️ エントリ {i+1}: extracted_words が空です")
+                    continue
+                
+                normalized_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
+                unique_words = list(set(normalized_words))
+                
+                st.write(f"✅ {university_name}: {len(extracted_words)}語 → {len(unique_words)}ユニーク語")
+                
+                # 各単語帳との比較分析
+                vocab_coverage = {}
+                for vocab_name, vocab_set in vocab_books.items():
                 matched_words = [word for word in unique_words if word in vocab_set]
                 matched_count = len(matched_words)
                 
@@ -264,16 +291,24 @@ def perform_vocabulary_analysis(extraction_data):
                     'matched_words': matched_words[:20]  # 最初の20語のみ保存
                 }
             
-            # 大学データを保存
-            st.write(f"  - 保存先キー: '{university_name}'")
-            analysis_result['university_analysis'][university_name] = {
-                'source_file': source_file,
-                'total_words': len(extracted_words),
-                'unique_words': len(unique_words),
-                'vocabulary_coverage': vocab_coverage,
-                'pages_processed': entry.get('pages_processed', 0)
-            }
-            st.write(f"  - 保存完了。現在の大学数: {len(analysis_result['university_analysis'])}")
+                # 大学データを保存
+                try:
+                    analysis_result['university_analysis'][university_name] = {
+                        'source_file': source_file,
+                        'total_words': len(extracted_words),
+                        'unique_words': len(unique_words),
+                        'vocabulary_coverage': vocab_coverage,
+                        'pages_processed': entry.get('pages_processed', 0)
+                    }
+                    st.success(f"✅ {university_name} のデータを保存完了")
+                    st.write(f"現在の大学数: {len(analysis_result['university_analysis'])}")
+                except Exception as save_error:
+                    st.error(f"❌ {university_name} の保存中にエラー: {str(save_error)}")
+                    continue
+                    
+            except Exception as entry_error:
+                st.error(f"❌ エントリ {i+1} の処理中にエラー: {str(entry_error)}")
+                continue
         
         # 全体サマリーの計算
         all_coverage_data = {vocab_name: [] for vocab_name in vocab_books.keys()}
