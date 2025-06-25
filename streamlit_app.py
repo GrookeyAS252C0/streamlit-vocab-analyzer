@@ -54,10 +54,10 @@ def main():
     
     # ファイルアップロードエリア
     uploaded_files = st.file_uploader(
-        "extraction_results_pure_english.json ファイルを選択（複数選択可能）",
+        "英語分析用JSONファイルを選択（複数選択可能）",
         type=["json"],
         accept_multiple_files=True,
-        help="OCR処理済みの英語抽出結果JSONファイルをアップロードしてください。複数ファイルを統合して分析します。"
+        help="OCR処理済みの英語抽出結果JSONファイルをアップロードしてください。大学名_年度_英語_学部名.json形式のファイルに対応しています。"
     )
     
     if uploaded_files:
@@ -97,16 +97,17 @@ def main():
             st.error(f"❌ ファイル読み込みエラー: {str(e)}")
     else:
         st.info("""
-        👆 **extraction_results_pure_english.json ファイルをアップロードしてください**
+        👆 **英語分析用JSONファイルをアップロードしてください**
         
-        📋 必要なファイル形式:
-        - OCR処理済みの英語抽出結果
-        - extracted_data セクションに各大学・学部のデータ
-        - pure_english_text と extracted_words を含む
+        📋 対応しているファイル形式:
+        - **新形式**: `大学名_年度_英語_学部名.json` (file_info + content構造)
+        - **旧形式**: `extraction_results_pure_english.json` (extraction_summary + extracted_data構造)
+        
+        💡 複数ファイルをまとめて選択して一括分析が可能です
         """)
 
 def merge_multiple_json_files(uploaded_files):
-    """複数のJSONファイルを統合"""
+    """複数のJSONファイルを統合（実際のJSONフォーマットに対応）"""
     try:
         combined_data = {
             'extraction_summary': {
@@ -121,19 +122,41 @@ def merge_multiple_json_files(uploaded_files):
             uploaded_file.seek(0)
             file_content = json.load(uploaded_file)
             
-            # サマリー情報を統合
-            file_summary = file_content.get('extraction_summary', {})
-            combined_data['extraction_summary']['total_source_files'] += file_summary.get('total_source_files', 0)
-            combined_data['extraction_summary']['total_words_extracted'] += file_summary.get('total_words_extracted', 0)
-            
-            # 抽出データを統合
-            file_extracted_data = file_content.get('extracted_data', [])
-            combined_data['extracted_data'].extend(file_extracted_data)
+            # 新しいフォーマット対応
+            if 'file_info' in file_content and 'content' in file_content:
+                # 新しいフォーマット: {"file_info": {...}, "content": {"extracted_words": [...]}}
+                file_info = file_content.get('file_info', {})
+                content = file_content.get('content', {})
+                extraction_results = file_content.get('extraction_results', {})
+                
+                # サマリー情報を統合
+                combined_data['extraction_summary']['total_source_files'] += 1
+                combined_data['extraction_summary']['total_words_extracted'] += extraction_results.get('total_words', 0)
+                
+                # 抽出データを統合
+                extracted_entry = {
+                    'source_file': file_info.get('source_file', uploaded_file.name),
+                    'pages_processed': file_info.get('processed_pages', 0),
+                    'ocr_confidence': file_info.get('ocr_confidence', 0),
+                    'extracted_words': content.get('extracted_words', []),
+                    'english_passages': content.get('english_passages', [])
+                }
+                combined_data['extracted_data'].append(extracted_entry)
+                
+            else:
+                # 旧フォーマット対応
+                file_summary = file_content.get('extraction_summary', {})
+                combined_data['extraction_summary']['total_source_files'] += file_summary.get('total_source_files', 0)
+                combined_data['extraction_summary']['total_words_extracted'] += file_summary.get('total_words_extracted', 0)
+                
+                file_extracted_data = file_content.get('extracted_data', [])
+                combined_data['extracted_data'].extend(file_extracted_data)
         
         return combined_data
         
     except Exception as e:
         st.error(f"ファイル統合中にエラーが発生しました: {str(e)}")
+        st.error(f"詳細: {str(e)}")
         return None
 
 @st.cache_data
@@ -242,8 +265,21 @@ def perform_vocabulary_analysis(extraction_data):
         if not extracted_data_list:
             st.error("❌ extracted_data リストが空です")
             st.write("**JSONファイル構造の確認:**")
-            st.write("期待される形式:")
-            st.code("""{
+            st.write("対応している形式:")
+            st.code("""新形式:
+{
+  "file_info": {
+    "source_file": "大学名_年度_英語_学部名.pdf",
+    "processed_pages": 7,
+    "ocr_confidence": 0.95
+  },
+  "content": {
+    "extracted_words": ["word1", "word2", ...]
+  }
+}
+
+旧形式:
+{
   "extraction_summary": {...},
   "extracted_data": [
     {
