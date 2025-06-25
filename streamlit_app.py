@@ -455,8 +455,8 @@ def perform_vocabulary_analysis(extraction_data):
                         'matched_words_count': matched_count,
                         'target_coverage_rate': target_coverage_rate,
                         'extraction_precision': extraction_precision,
-                        'matched_words': matched_words[:20],  # 最初の20語のみ保存
-                        'unmatched_words': unmatched_words[:50],  # カバーされていない単語（最初の50語）
+                        'matched_words': matched_words[:20],  # 最初の20語のみ保存（表示用）
+                        'unmatched_words': unmatched_words,  # 全てのカバーされていない単語を保存
                         'unmatched_count': len(unmatched_words)
                     }
             
@@ -920,27 +920,76 @@ def show_university_analysis(analysis_data: dict):
             
             with col2:
                 if unmatched_words:
-                    st.write("**カバーされていない主な語彙:**")
+                    # 表示方法の選択
+                    display_mode = st.radio(
+                        "表示形式を選択:",
+                        ["プレビュー表示", "全語彙表示", "ダウンロード用"],
+                        key=f"display_mode_{vocab_name}_{selected_university}",
+                        horizontal=True
+                    )
                     
-                    # 単語を5個ずつの行に分けて表示
-                    displayed_words = unmatched_words[:30]  # 最初の30語を表示
-                    for j in range(0, len(displayed_words), 5):
-                        word_group = displayed_words[j:j+5]
-                        st.write("• " + " • ".join(word_group))
+                    if display_mode == "プレビュー表示":
+                        st.write("**カバーされていない主な語彙（最初の30語）:**")
+                        displayed_words = unmatched_words[:30]
+                        for j in range(0, len(displayed_words), 5):
+                            word_group = displayed_words[j:j+5]
+                            st.write("• " + " • ".join(word_group))
+                        
+                        if len(unmatched_words) > 30:
+                            st.write(f"... 他 {len(unmatched_words) - 30}語")
                     
-                    if len(unmatched_words) > 30:
-                        st.write(f"... 他 {len(unmatched_words) - 30}語")
-                    
-                    # 詳細表示のエクスパンダー
-                    if len(unmatched_words) > 10:
-                        with st.expander(f"全 {len(unmatched_words)}語を表示"):
-                            all_words_text = " • ".join(unmatched_words)
-                            st.text_area(
-                                "カバーされていない全語彙",
-                                value=all_words_text,
-                                height=200,
-                                key=f"unmatched_{vocab_name}_{selected_university}"
+                    elif display_mode == "全語彙表示":
+                        st.write(f"**カバーされていない全語彙（{len(unmatched_words)}語）:**")
+                        
+                        # ページネーション
+                        words_per_page = 100
+                        total_pages = (len(unmatched_words) + words_per_page - 1) // words_per_page
+                        
+                        if total_pages > 1:
+                            page = st.selectbox(
+                                f"ページを選択 (1-{total_pages})",
+                                range(1, total_pages + 1),
+                                key=f"page_{vocab_name}_{selected_university}"
                             )
+                            start_idx = (page - 1) * words_per_page
+                            end_idx = min(start_idx + words_per_page, len(unmatched_words))
+                            page_words = unmatched_words[start_idx:end_idx]
+                            
+                            st.write(f"**ページ {page}/{total_pages} ({start_idx + 1}-{end_idx}語):**")
+                        else:
+                            page_words = unmatched_words
+                        
+                        # 10語ずつの行で表示
+                        for j in range(0, len(page_words), 10):
+                            word_group = page_words[j:j+10]
+                            st.write("• " + " • ".join(word_group))
+                    
+                    elif display_mode == "ダウンロード用":
+                        st.write("**ダウンロード・コピー用フォーマット:**")
+                        
+                        format_option = st.selectbox(
+                            "フォーマットを選択:",
+                            ["CSV形式", "リスト形式", "改行区切り"],
+                            key=f"format_{vocab_name}_{selected_university}"
+                        )
+                        
+                        if format_option == "CSV形式":
+                            formatted_text = ", ".join(unmatched_words)
+                        elif format_option == "リスト形式":
+                            formatted_text = " • ".join(unmatched_words)
+                        else:  # 改行区切り
+                            formatted_text = "\n".join(unmatched_words)
+                        
+                        st.text_area(
+                            f"カバーされていない全語彙 ({len(unmatched_words)}語)",
+                            value=formatted_text,
+                            height=300,
+                            key=f"download_{vocab_name}_{selected_university}",
+                            help="このテキストエリアから全ての単語をコピーできます"
+                        )
+                        
+                        # 統計情報
+                        st.write(f"**統計:** 総語数 {len(unmatched_words)}語")
                 else:
                     st.success("🎉 すべての語彙がカバーされています！")
 
