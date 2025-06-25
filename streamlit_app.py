@@ -243,6 +243,10 @@ def perform_vocabulary_analysis(extraction_data):
             unique_words = list(set(normalized_words))
             
             st.write(f"処理中 {i+1}/{len(extracted_data_list)}: {university_name} ({len(extracted_words)}語)")
+            st.write(f"  - source_file: '{source_file}'")
+            st.write(f"  - university_name: '{university_name}'")
+            st.write(f"  - normalized_words: {len(normalized_words)}")
+            st.write(f"  - unique_words: {len(unique_words)}")
             
             # 各単語帳との比較分析
             vocab_coverage = {}
@@ -261,6 +265,7 @@ def perform_vocabulary_analysis(extraction_data):
                 }
             
             # 大学データを保存
+            st.write(f"  - 保存先キー: '{university_name}'")
             analysis_result['university_analysis'][university_name] = {
                 'source_file': source_file,
                 'total_words': len(extracted_words),
@@ -268,6 +273,7 @@ def perform_vocabulary_analysis(extraction_data):
                 'vocabulary_coverage': vocab_coverage,
                 'pages_processed': entry.get('pages_processed', 0)
             }
+            st.write(f"  - 保存完了。現在の大学数: {len(analysis_result['university_analysis'])}")
         
         # 全体サマリーの計算
         all_coverage_data = {vocab_name: [] for vocab_name in vocab_books.keys()}
@@ -292,6 +298,11 @@ def perform_vocabulary_analysis(extraction_data):
                     'average_extraction_precision': avg_precision,
                     'total_matched_words': total_matched
                 }
+        
+        # 最終結果の確認
+        st.success(f"✅ 分析完了: {len(analysis_result['university_analysis'])}大学・学部")
+        st.write("**最終結果:**")
+        st.write(f"  - university_analysis keys: {list(analysis_result['university_analysis'].keys())}")
         
         return analysis_result
         
