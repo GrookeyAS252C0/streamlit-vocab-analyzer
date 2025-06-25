@@ -337,14 +337,47 @@ def perform_vocabulary_analysis(extraction_data):
                     st.warning(f"⚠️ エントリ {i+1}: 大学名抽出に失敗 - '{source_file}'")
                     continue
                 
-                # 抽出された単語を正規化
+                # 抽出された単語を正規化（Lemmatization含む）
                 extracted_words = entry.get('extracted_words', [])
                 if not extracted_words:
                     st.warning(f"⚠️ エントリ {i+1}: extracted_words が空です")
                     continue
                 
-                normalized_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
-                unique_words = list(set(normalized_words))
+                # 基本的な正規化
+                cleaned_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
+                
+                # Lemmatization処理
+                try:
+                    from nltk.stem import WordNetLemmatizer
+                    
+                    lemmatizer = WordNetLemmatizer()
+                    normalized_words = []
+                    
+                    for word in cleaned_words:
+                        # 複数品詞でlemmatizeを試行
+                        lemma_verb = lemmatizer.lemmatize(word, pos='v')  # 動詞
+                        lemma_noun = lemmatizer.lemmatize(lemma_verb, pos='n')  # 名詞
+                        
+                        # より効果的な正規化を選択
+                        if len(lemma_noun) < len(word):
+                            normalized_words.append(lemma_noun)
+                        elif len(lemma_verb) < len(word):
+                            normalized_words.append(lemma_verb)
+                        else:
+                            normalized_words.append(word)
+                    
+                    unique_words = list(set(normalized_words))
+                    
+                    # Lemmatization効果を表示
+                    original_unique = len(set(cleaned_words))
+                    lemmatized_unique = len(unique_words)
+                    if original_unique != lemmatized_unique:
+                        st.write(f"  📝 Lemmatization効果: {original_unique}語 → {lemmatized_unique}語")
+                    
+                except Exception as lemma_error:
+                    st.warning(f"⚠️ Lemmatization処理でエラー、基本正規化を使用: {str(lemma_error)}")
+                    normalized_words = cleaned_words
+                    unique_words = list(set(normalized_words))
                 
                 st.write(f"✅ {university_name}: {len(extracted_words)}語 → {len(unique_words)}ユニーク語")
                 
