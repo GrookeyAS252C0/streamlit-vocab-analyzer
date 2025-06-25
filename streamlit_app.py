@@ -227,6 +227,25 @@ def setup_analysis_sidebar(analysis_data):
     **一致語数**: 実際に一致した語数
     """)
     
+    # 分析オプション
+    st.sidebar.subheader("🔧 分析オプション")
+    
+    exclude_basic = st.sidebar.checkbox(
+        "基礎語彙を除外して分析",
+        value=False,
+        help="Target 1400の基礎語彙を除外して、より高度な語彙のみを分析します"
+    )
+    
+    if exclude_basic:
+        st.sidebar.info("📝 Target 1400の基礎語彙を除外した高度語彙分析を実行します")
+    else:
+        st.sidebar.info("📝 全語彙を含む標準分析を実行します")
+    
+    # 除外設定をセッション状態に保存
+    st.session_state.exclude_basic_vocab = exclude_basic
+    
+    st.sidebar.markdown("---")
+    
     # データ情報
     st.sidebar.subheader("📋 データ情報")
     overall_summary = analysis_data.get('overall_summary', {})
@@ -234,6 +253,9 @@ def setup_analysis_sidebar(analysis_data):
     st.sidebar.write(f"**選択中**: {len(selected_universities)}大学・学部")
     st.sidebar.write(f"**単語帳数**: 5種類")
     st.sidebar.write(f"**総単語数**: {overall_summary.get('total_words_extracted', 0):,}")
+    
+    if exclude_basic:
+        st.sidebar.write(f"**分析モード**: 高度語彙のみ")
 
 def filter_analysis_data_by_selection(analysis_data, selected_universities):
     """選択された大学のデータのみでフィルタリングした分析結果を作成"""
@@ -404,6 +426,14 @@ def perform_vocabulary_analysis(extraction_data):
                 # 基本的な正規化
                 cleaned_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
                 
+                # 基礎語彙除外オプションの確認
+                exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+                if exclude_basic:
+                    # Target 1400の基礎語彙を除外
+                    basic_vocab = vocab_books.get('Target 1400', set())
+                    cleaned_words = [word for word in cleaned_words if word not in basic_vocab]
+                    st.write(f"  🔧 基礎語彙除外: Target 1400の{len(basic_vocab)}語を除外")
+                
                 # Lemmatization処理
                 try:
                     from nltk.stem import WordNetLemmatizer
@@ -437,7 +467,15 @@ def perform_vocabulary_analysis(extraction_data):
                     normalized_words = cleaned_words
                     unique_words = list(set(normalized_words))
                 
-                st.write(f"✅ {university_name}: {len(extracted_words)}語 → {len(unique_words)}ユニーク語")
+                # 基礎語彙除外の効果を表示
+                exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+                if exclude_basic:
+                    basic_vocab = vocab_books.get('Target 1400', set())
+                    original_unique = len(set([word.lower().strip() for word in extracted_words if word and len(word) > 1]))
+                    excluded_count = original_unique - len(unique_words)
+                    st.write(f"✅ {university_name}: {len(extracted_words)}語 → {original_unique}ユニーク語 → {len(unique_words)}高度語彙 (基礎語彙{excluded_count}語除外)")
+                else:
+                    st.write(f"✅ {university_name}: {len(extracted_words)}語 → {len(unique_words)}ユニーク語")
                 
                 # 各単語帳との比較分析
                 vocab_coverage = {}
@@ -547,8 +585,16 @@ def show_analysis_dashboard(analysis_data):
     filtered_data = filter_analysis_data_by_selection(analysis_data, selected_universities)
     
     # 選択変更時の通知
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
     if st.session_state.get('selection_changed', False):
-        st.info(f"🔄 {len(selected_universities)}大学・学部の分析結果を表示中...")
+        mode_text = "（高度語彙のみ）" if exclude_basic else "（全語彙）"
+        st.info(f"🔄 {len(selected_universities)}大学・学部の分析結果を表示中... {mode_text}")
+    
+    # 分析モードの表示
+    if exclude_basic:
+        st.success("🎯 **高度語彙分析モード**: Target 1400の基礎語彙を除外した分析結果を表示しています")
+    else:
+        st.info("📊 **標準分析モード**: 全語彙を含む分析結果を表示しています")
     
     # メインタブの作成
     tab1, tab2, tab3 = st.tabs(["🏠 概要分析", "🏫 大学別詳細", "📊 比較分析"])
@@ -566,7 +612,9 @@ def show_overview_analysis(analysis_data: dict):
     """概要分析タブのコンテンツ"""
     
     # 簡潔な定義（常時表示）
-    col1, col2 = st.columns(2)
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+    
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.info("""
         **📈 カバレッジ率とは？**  
@@ -578,6 +626,18 @@ def show_overview_analysis(analysis_data: dict):
         **🎯 抽出精度とは？**  
         抽出した単語のうち、単語帳に含まれる割合。高いほど学習効率が良い。
         """)
+    
+    with col3:
+        if exclude_basic:
+            st.warning("""
+            **🔧 高度語彙モード**  
+            Target 1400の基礎語彙を除外し、より高度な語彙のみを分析中。
+            """)
+        else:
+            st.info("""
+            **📊 標準分析モード**  
+            全語彙を含む標準的な分析を実行中。
+            """)
     
     st.markdown("---")
     
