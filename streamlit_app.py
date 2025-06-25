@@ -138,35 +138,17 @@ def merge_multiple_json_files(uploaded_files):
 
 @st.cache_data
 def load_vocabulary_books():
-    """単語帳データを読み込み"""
+    """単語帳データを読み込み（組み込みデータを使用）"""
     try:
+        from vocab_data import get_embedded_vocabulary_data
+        
+        # 組み込みデータを取得
+        embedded_data = get_embedded_vocabulary_data()
+        
+        # 小文字化して正規化
         vocab_data = {}
-        # 親ディレクトリの単語帳ファイルを参照
-        import os
-        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        
-        vocab_files = {
-            'Target 1900': os.path.join(parent_dir, 'target1900.csv'),
-            'Target 1400': os.path.join(parent_dir, 'target1400.csv'),
-            'システム英単語': os.path.join(parent_dir, 'システム英単語.csv'),
-            'LEAP': os.path.join(parent_dir, 'LEAP.csv'),
-            '鉄壁': os.path.join(parent_dir, '鉄壁.csv')
-        }
-        
-        for name, filepath in vocab_files.items():
-            try:
-                if name == 'Target 1900':
-                    df = pd.read_csv(filepath, encoding='utf-8-sig')
-                    vocab_data[name] = set(df['word'].str.lower().dropna())
-                elif name == 'Target 1400':
-                    df = pd.read_csv(filepath, encoding='utf-8-sig')
-                    vocab_data[name] = set(df['単語'].str.lower().dropna())
-                else:
-                    df = pd.read_csv(filepath, encoding='utf-8-sig')
-                    vocab_data[name] = set(df['英語'].str.lower().dropna())
-            except Exception as e:
-                st.warning(f"単語帳 '{name}' の読み込みに失敗: {str(e)}")
-                vocab_data[name] = set()
+        for name, word_set in embedded_data.items():
+            vocab_data[name] = {word.lower().strip() for word in word_set if word and len(word) > 1}
         
         return vocab_data
     except Exception as e:
@@ -508,17 +490,16 @@ def show_university_analysis(analysis_data: dict):
     if len(selected_universities) > 1:
         st.info(f"複数選択されています。{selected_university} の詳細を表示中（他 {len(selected_universities)-1} 大学）")
     
-    university_data = data.get('university_analysis', {}).get(selected_university, {})
-    university_meta = metadata.get('universities', {}).get(selected_university, {})
+    university_data = analysis_data.get('university_analysis', {}).get(selected_university, {})
+    university_meta = {}  # メタデータは現在利用不可
     
     # 大学情報カード
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.info(f"""
-        **🏫 {university_meta.get('full_name', selected_university)}**
-        - 分類: {university_meta.get('category', 'N/A')}
-        - 地域: {university_meta.get('region', 'N/A')}
+        **🏫 {selected_university}**
+        - ファイル: {university_data.get('source_file', 'N/A').split('/')[-1] if university_data.get('source_file') else 'N/A'}
         """)
     
     with col2:
@@ -526,18 +507,13 @@ def show_university_analysis(analysis_data: dict):
         **📊 処理統計**
         - 総単語数: {university_data.get('total_words', 0):,}
         - ユニーク語数: {university_data.get('unique_words', 0):,}
-        - 文の数: {university_data.get('total_sentences', 0):,}
-        - 平均語数/文: {university_data.get('avg_words_per_sentence', 0):.1f}語
         - 処理ページ: {university_data.get('pages_processed', 0)}
         """)
     
     with col3:
-        ocr_confidence = university_data.get('ocr_confidence', 0)
-        confidence_color = "🟢" if ocr_confidence >= 95 else "🟡" if ocr_confidence >= 90 else "🔴"
         st.info(f"""
-        **⚡ OCR品質**
-        - 信頼度: {confidence_color} {ocr_confidence:.1f}%
-        - ファイル: {university_data.get('source_file', 'N/A').split('/')[-1]}
+        **📚 語彙分析**
+        - 単語帳数: {len(university_data.get('vocabulary_coverage', {}))}
         """)
     
     st.markdown("---")
