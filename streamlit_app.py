@@ -278,18 +278,18 @@ def perform_vocabulary_analysis(extraction_data):
                 # 各単語帳との比較分析
                 vocab_coverage = {}
                 for vocab_name, vocab_set in vocab_books.items():
-                matched_words = [word for word in unique_words if word in vocab_set]
-                matched_count = len(matched_words)
-                
-                target_coverage_rate = (matched_count / len(vocab_set)) * 100 if vocab_set else 0
-                extraction_precision = (matched_count / len(unique_words)) * 100 if unique_words else 0
-                
-                vocab_coverage[vocab_name] = {
-                    'matched_words_count': matched_count,
-                    'target_coverage_rate': target_coverage_rate,
-                    'extraction_precision': extraction_precision,
-                    'matched_words': matched_words[:20]  # 最初の20語のみ保存
-                }
+                    matched_words = [word for word in unique_words if word in vocab_set]
+                    matched_count = len(matched_words)
+                    
+                    target_coverage_rate = (matched_count / len(vocab_set)) * 100 if vocab_set else 0
+                    extraction_precision = (matched_count / len(unique_words)) * 100 if unique_words else 0
+                    
+                    vocab_coverage[vocab_name] = {
+                        'matched_words_count': matched_count,
+                        'target_coverage_rate': target_coverage_rate,
+                        'extraction_precision': extraction_precision,
+                        'matched_words': matched_words[:20]  # 最初の20語のみ保存
+                    }
             
                 # 大学データを保存
                 try:
