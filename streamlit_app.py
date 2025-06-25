@@ -195,14 +195,25 @@ def setup_analysis_sidebar(analysis_data):
     else:
         st.sidebar.success(f"✅ {len(available_universities)}大学・学部を検出")
     
+    # 前回の選択状態を取得
+    previous_selection = st.session_state.get('selected_universities', [])
+    
     selected_universities = st.sidebar.multiselect(
         "大学・学部を選択",
         available_universities,
         default=available_universities[:3] if len(available_universities) >= 3 else available_universities,
-        help="比較分析する大学・学部を選択してください"
+        help="比較分析する大学・学部を選択してください",
+        key="university_selector"
     )
     
-    st.session_state.selected_universities = selected_universities
+    # 選択が変更された場合の検出
+    if selected_universities != previous_selection:
+        st.session_state.selected_universities = selected_universities
+        st.session_state.selection_changed = True
+        st.sidebar.success("🔄 選択を更新しました")
+    else:
+        st.session_state.selected_universities = selected_universities
+        st.session_state.selection_changed = False
     
     st.sidebar.markdown("---")
     
@@ -220,8 +231,55 @@ def setup_analysis_sidebar(analysis_data):
     st.sidebar.subheader("📋 データ情報")
     overall_summary = analysis_data.get('overall_summary', {})
     st.sidebar.write(f"**総大学数**: {len(available_universities)}")
+    st.sidebar.write(f"**選択中**: {len(selected_universities)}大学・学部")
     st.sidebar.write(f"**単語帳数**: 5種類")
     st.sidebar.write(f"**総単語数**: {overall_summary.get('total_words_extracted', 0):,}")
+
+def filter_analysis_data_by_selection(analysis_data, selected_universities):
+    """選択された大学のデータのみでフィルタリングした分析結果を作成"""
+    if not selected_universities:
+        return analysis_data
+    
+    # 元の分析データから選択された大学のみを抽出
+    filtered_data = {
+        'overall_summary': analysis_data.get('overall_summary', {}),
+        'vocabulary_summary': {},
+        'university_analysis': {}
+    }
+    
+    # 選択された大学のデータを抽出
+    university_analysis = analysis_data.get('university_analysis', {})
+    for univ_name in selected_universities:
+        if univ_name in university_analysis:
+            filtered_data['university_analysis'][univ_name] = university_analysis[univ_name]
+    
+    # 選択された大学のデータから語彙サマリーを再計算
+    if filtered_data['university_analysis']:
+        vocab_books = load_vocabulary_books()
+        vocab_summary = {}
+        
+        for vocab_name in vocab_books.keys():
+            coverage_rates = []
+            precisions = []
+            total_matched = 0
+            
+            for univ_data in filtered_data['university_analysis'].values():
+                vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+                if vocab_coverage:
+                    coverage_rates.append(vocab_coverage.get('target_coverage_rate', 0))
+                    precisions.append(vocab_coverage.get('extraction_precision', 0))
+                    total_matched += vocab_coverage.get('matched_words_count', 0)
+            
+            if coverage_rates:
+                vocab_summary[vocab_name] = {
+                    'average_coverage_rate': sum(coverage_rates) / len(coverage_rates),
+                    'average_extraction_precision': sum(precisions) / len(precisions),
+                    'total_matched_words': total_matched
+                }
+        
+        filtered_data['vocabulary_summary'] = vocab_summary
+    
+    return filtered_data
 
 def perform_vocabulary_analysis(extraction_data):
     """JSONデータから語彙分析を実行"""
@@ -479,17 +537,25 @@ def show_analysis_dashboard(analysis_data):
     # サイドバー設定
     setup_analysis_sidebar(analysis_data)
     
+    # 選択された大学に基づいてデータをフィルタリング
+    selected_universities = st.session_state.get('selected_universities', [])
+    filtered_data = filter_analysis_data_by_selection(analysis_data, selected_universities)
+    
+    # 選択変更時の通知
+    if st.session_state.get('selection_changed', False):
+        st.info(f"🔄 {len(selected_universities)}大学・学部の分析結果を表示中...")
+    
     # メインタブの作成
     tab1, tab2, tab3 = st.tabs(["🏠 概要分析", "🏫 大学別詳細", "📊 比較分析"])
     
     with tab1:
-        show_overview_analysis(analysis_data)
+        show_overview_analysis(filtered_data)
     
     with tab2:
-        show_university_analysis(analysis_data)
+        show_university_analysis(filtered_data)
     
     with tab3:
-        show_comparison_analysis(analysis_data)
+        show_comparison_analysis(filtered_data)
 
 def show_overview_analysis(analysis_data: dict):
     """概要分析タブのコンテンツ"""
