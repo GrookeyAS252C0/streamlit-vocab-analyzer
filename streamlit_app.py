@@ -163,6 +163,15 @@ def setup_analysis_sidebar(analysis_data):
     st.sidebar.subheader("🏫 分析対象")
     available_universities = list(analysis_data.get('university_analysis', {}).keys())
     
+    # デバッグ情報を表示
+    if len(available_universities) == 0:
+        st.sidebar.error("❌ 大学データが見つかりません")
+        st.sidebar.write("**デバッグ情報:**")
+        st.sidebar.write(f"analysis_data keys: {list(analysis_data.keys())}")
+        st.sidebar.write(f"university_analysis keys: {list(analysis_data.get('university_analysis', {}).keys())}")
+    else:
+        st.sidebar.success(f"✅ {len(available_universities)}大学・学部を検出")
+    
     selected_universities = st.sidebar.multiselect(
         "大学・学部を選択",
         available_universities,
@@ -221,7 +230,10 @@ def perform_vocabulary_analysis(extraction_data):
         }
         
         # 各大学・学部のデータを分析
-        for entry in extraction_data.get('extracted_data', []):
+        extracted_data_list = extraction_data.get('extracted_data', [])
+        st.info(f"処理対象: {len(extracted_data_list)}件のデータエントリ")
+        
+        for i, entry in enumerate(extracted_data_list):
             source_file = entry.get('source_file', '')
             university_name = extract_university_name_from_filename(source_file)
             
@@ -229,6 +241,8 @@ def perform_vocabulary_analysis(extraction_data):
             extracted_words = entry.get('extracted_words', [])
             normalized_words = [word.lower().strip() for word in extracted_words if word and len(word) > 1]
             unique_words = list(set(normalized_words))
+            
+            st.write(f"処理中 {i+1}/{len(extracted_data_list)}: {university_name} ({len(extracted_words)}語)")
             
             # 各単語帳との比較分析
             vocab_coverage = {}
@@ -291,7 +305,10 @@ def extract_university_name_from_filename(filename):
         return "不明な大学"
     
     # PDFファイル名の例: "慶應義塾大学_2024年度_英語_薬学部.pdf"
-    parts = filename.replace('.pdf', '').split('_')
+    # ファイル名からパス部分を取り除く
+    basename = filename.split('/')[-1] if '/' in filename else filename
+    parts = basename.replace('.pdf', '').split('_')
+    
     if len(parts) >= 4:
         university = parts[0]
         department = parts[3]
@@ -299,7 +316,7 @@ def extract_university_name_from_filename(filename):
     elif len(parts) >= 1:
         return parts[0]
     
-    return filename.replace('.pdf', '')
+    return basename.replace('.pdf', '')
 
 def show_analysis_dashboard(analysis_data):
     """分析結果ダッシュボードの表示"""
