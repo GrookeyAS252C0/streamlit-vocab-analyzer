@@ -1,0 +1,64 @@
+{
+  "function_words": {
+    "determiners": {
+      "articles": ["a", "an", "the"],
+      "demonstratives": ["this", "that", "these", "those"],
+      "possessive_determiners": ["my", "your", "his", "her", "its", "our", "their"],
+      "quantifiers": ["some", "any", "many", "much", "few", "little", "several", "all", "both", "each", "every", "either", "neither", "more", "most", "less", "enough", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "no"]
+    },
+    "pronouns": {
+      "personal_pronouns": {
+        "subject": ["I", "you", "he", "she", "it", "we", "they"],
+        "object": ["me", "you", "him", "her", "it", "us", "them"]
+      },
+      "possessive_pronouns": ["mine", "yours", "his", "hers", "ours", "theirs"],
+      "reflexive_pronouns": ["myself", "yourself", "himself", "herself", "itself", "ourselves", "yourselves", "themselves"],
+      "interrogative_pronouns": ["who", "whom", "whose", "what", "which"],
+      "relative_pronouns": ["who", "whom", "whose", "which", "that"],
+      "indefinite_pronouns": ["someone", "anyone", "everyone", "something", "anything", "everything", "one", "none", "somebody", "anybody", "everybody", "nobody"]
+    },
+    "prepositions": [
+      "at", "in", "on", "by", "for", "with", "without", "to", "from", "of", "about", "through", "over", "under", "above", "below", "between", "among", "during", "before", "after", "since", "until", "despite", "except", "including", "across", "against", "towards", "around", "along", "behind", "beyond", "inside", "near", "onto", "outside", "past", "till", "upon", "within", "beside", "underneath"
+    ],
+    "conjunctions": {
+      "coordinating_conjunctions": ["and", "but", "or", "nor", "for", "so", "yet"],
+      "subordinating_conjunctions": ["because", "since", "although", "though", "while", "when", "where", "if", "unless", "until", "before", "after", "as", "that", "whereas", "provided", "supposing"]
+    },
+    "auxiliary_verbs": {
+      "primary_auxiliaries": {
+        "be": ["am", "is", "are", "was", "were", "being", "been"],
+        "have": ["have", "has", "had", "having"],
+        "do": ["do", "does", "did"]
+      },
+      "modal_auxiliaries": ["can", "could", "may", "might", "will", "would", "shall", "should", "must", "ought"]
+    },
+    "question_words": ["who", "what", "when", "where", "why", "how", "which", "whose", "whom"],
+    "function_adverbs": {
+      "degree_adverbs": ["very", "quite", "rather", "too", "enough", "so", "such"],
+      "focus_adverbs": ["only", "just", "even", "also", "too", "either"],
+      "temporal_adverbs": ["when", "then", "now", "today", "tomorrow", "yesterday", "already", "still", "yet", "always", "never", "often", "sometimes", "soon"],
+      "locative_adverbs": ["where", "here", "there", "everywhere", "anywhere", "nowhere", "somewhere"],
+      "manner_question_adverbs": ["how", "why"]
+    },
+    "negatives": ["not", "no", "never", "nothing", "nobody", "nowhere", "neither", "none"],
+    "discourse_markers": ["well", "oh", "yes", "no"],
+    "particles": ["up", "down", "out", "in", "off", "on", "over", "back", "away", "through"]
+  },
+  "metadata": {
+    "description": "英語の機能語（Function Words）の包括的リスト",
+    "total_categories": 9,
+    "classification_basis": "文法的機能による分類",
+    "linguistic_properties": {
+      "class_type": "closed_class",
+      "approximate_total": "400語未満",
+      "frequency": "全使用語彙の約60%",
+      "new_additions": "稀"
+    },
+    "notes": [
+      "機能語は内容語（content words）と対照的に、主に文法的関係を表現する",
+      "閉じたクラスで新しい語の追加は稀",
+      "文の構造的関係を示す「糊」の役割",
+      "一部の語は文脈により機能語・内容語の両方になりうる"
+    ]
+  }
+}
