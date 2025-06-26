@@ -977,9 +977,21 @@ def show_overview_analysis(analysis_data: dict):
         # カバーされていない単語の統計
         st.markdown("---")
         st.subheader("📝 カバー外語彙の統計")
-        st.info("""
-        各単語帳でカバーされていない語彙の統計情報です。これらは追加学習対象となる可能性があります。
-        """)
+        # 選択大学数に応じて説明を変更
+        selected_count = len(st.session_state.get('selected_universities', []))
+        if selected_count == 1:
+            st.info("""
+            選択した大学で各単語帳にカバーされていない語彙の統計情報です。
+            """)
+        else:
+            st.info(f"""
+            選択した{selected_count}大学で各単語帳にカバーされていない語彙の統計情報です。
+            """)
+        
+        # 基礎語彙除外時の注記
+        exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+        if exclude_basic:
+            st.caption("💫 Target 1200は基礎語彙として表示から除外されています")
         
         # 選択された大学のカバー外語彙統計を計算
         selected_universities = st.session_state.get('selected_universities', [])
@@ -995,20 +1007,41 @@ def show_overview_analysis(analysis_data: dict):
             for vocab_name in display_vocabulary_summary.keys():
                 total_unmatched = 0
                 total_words = 0
+                univ_count = 0
                 
                 for univ_name in selected_universities:
                     univ_data = university_analysis.get(univ_name, {})
-                    vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
                     
-                    total_unmatched += vocab_coverage.get('unmatched_count', 0)
-                    total_words += univ_data.get('unique_words', 0)
+                    # 基礎語彙除外が有効な場合は再計算されたデータを使用
+                    if exclude_basic and univ_data.get('basic_vocab_excluded', False):
+                        # 再計算されたデータから取得
+                        vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+                        unmatched_count = vocab_coverage.get('unmatched_count', 0)
+                        unique_words = univ_data.get('unique_words', 0)  # 再計算後の語彙数
+                    else:
+                        # 標準データから取得
+                        vocab_coverage = univ_data.get('vocabulary_coverage', {}).get(vocab_name, {})
+                        unmatched_count = vocab_coverage.get('unmatched_count', 0)
+                        unique_words = univ_data.get('unique_words', 0)
+                    
+                    if unique_words > 0:  # 有効なデータがある大学のみ集計
+                        total_unmatched += unmatched_count
+                        total_words += unique_words
+                        univ_count += 1
                 
-                if total_words > 0:
-                    uncovered_rate = (total_unmatched / len(selected_universities) / total_words * len(selected_universities)) * 100
+                if univ_count > 0 and total_words > 0:
+                    # 1つの大学の場合は実際の値、複数の場合は平均値
+                    if univ_count == 1:
+                        display_unmatched = total_unmatched
+                    else:
+                        display_unmatched = total_unmatched // univ_count
+                    
+                    avg_uncovered_rate = (total_unmatched / total_words) * 100
+                    
                     uncovered_stats.append({
                         '単語帳': vocab_name,
-                        'カバー外語数': total_unmatched // len(selected_universities),
-                        'カバー外率(%)': round(uncovered_rate, 1)
+                        'カバー外語数': display_unmatched,
+                        'カバー外率(%)': round(avg_uncovered_rate, 1)
                     })
             
             if uncovered_stats:
@@ -1072,8 +1105,14 @@ def show_university_analysis(analysis_data: dict):
     if len(selected_universities) > 1:
         st.info(f"複数選択されています。{selected_university} の詳細を表示中（他 {len(selected_universities)-1} 大学）")
     
+    # 基礎語彙除外が有効な場合は、フィルタリングされたデータから取得
     university_data = analysis_data.get('university_analysis', {}).get(selected_university, {})
     university_meta = {}  # メタデータは現在利用不可
+    
+    # デバッグ情報
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+    if exclude_basic and university_data.get('basic_vocab_excluded', False):
+        st.caption("🔍 基礎語彙除外後のデータを表示中")
     
     # 大学情報カード
     col1, col2, col3 = st.columns(3)
@@ -1185,10 +1224,17 @@ def show_university_analysis(analysis_data: dict):
     これらの語彙は追加学習が必要な可能性があります。
     """)
     
-    # 単語帳選択
-    vocab_tabs = st.tabs([f"📖 {vocab_name}" for vocab_name in vocab_coverage.keys()])
+    # Target 1200を表示から除外
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+    display_vocab_coverage = filter_vocabulary_coverage_for_display(vocab_coverage, exclude_basic)
     
-    for i, (vocab_name, vocab_stats) in enumerate(vocab_coverage.items()):
+    if exclude_basic:
+        st.caption("💫 Target 1200は基礎語彙として表示から除外されています")
+    
+    # 単語帳選択
+    vocab_tabs = st.tabs([f"📖 {vocab_name}" for vocab_name in display_vocab_coverage.keys()])
+    
+    for i, (vocab_name, vocab_stats) in enumerate(display_vocab_coverage.items()):
         with vocab_tabs[i]:
             unmatched_words = vocab_stats.get('unmatched_words', [])
             unmatched_count = vocab_stats.get('unmatched_count', 0)
