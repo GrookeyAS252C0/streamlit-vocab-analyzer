@@ -284,21 +284,26 @@ def recalculate_vocabulary_analysis_with_basic_exclusion(analysis_data, exclude_
         # 各単語帳に対して再計算
         new_vocab_coverage = {}
         
-        # 全単語帳のmatched_wordsとunmatched_wordsを組み合わせて元の抽出語彙を復元
-        all_extracted_words = set()
-        for vocab_name, coverage in original_vocab_coverage.items():
-            # 各単語帳のマッチした単語を追加
-            all_extracted_words.update(coverage.get('matched_words', []))
-            # unmatched_wordsはその単語帳にない単語なので、どれか一つから取得すれば十分
+        # 元の全抽出語彙を取得（新しいフィールドから）
+        all_extracted_words = univ_data.get('all_extracted_words', [])
         
-        # unmatched_wordsは重複している可能性があるので、一つの単語帳から取得
-        if 'Target 1900' in original_vocab_coverage:
-            all_extracted_words.update(original_vocab_coverage['Target 1900'].get('unmatched_words', []))
+        # もしall_extracted_wordsがない場合は、旧方式で復元を試みる
+        if not all_extracted_words:
+            all_extracted_words = set()
+            for vocab_name, coverage in original_vocab_coverage.items():
+                all_extracted_words.update(coverage.get('matched_words', []))
+            if 'Target 1900' in original_vocab_coverage:
+                all_extracted_words.update(original_vocab_coverage['Target 1900'].get('unmatched_words', []))
+            all_extracted_words = list(all_extracted_words)
         
         # 基礎語彙を除外（元の語彙数と除外後の数を記録）
         original_count = len(all_extracted_words)
         filtered_words = [word for word in all_extracted_words if word not in basic_vocab]
         excluded_count = original_count - len(filtered_words)
+        
+        # デバッグ情報を表示
+        if original_count > 0:
+            st.caption(f"🔍 {univ_name}: 元の語彙{original_count}語 → 基礎語彙{excluded_count}語除外 → 高度語彙{len(filtered_words)}語")
         
         # 各単語帳との再比較
         for vocab_name, vocab_set in vocab_books.items():
@@ -314,7 +319,7 @@ def recalculate_vocabulary_analysis_with_basic_exclusion(analysis_data, exclude_
                 'matched_words_count': matched_count,
                 'target_coverage_rate': target_coverage_rate,
                 'extraction_precision': extraction_precision,
-                'matched_words': matched_words[:20],
+                'matched_words': matched_words[:20],  # 表示用に20語のみ保存
                 'unmatched_words': unmatched_words,
                 'unmatched_count': len(unmatched_words)
             }
@@ -594,7 +599,7 @@ def perform_vocabulary_analysis(extraction_data):
                         'matched_words_count': matched_count,
                         'target_coverage_rate': target_coverage_rate,
                         'extraction_precision': extraction_precision,
-                        'matched_words': matched_words[:20],  # 最初の20語のみ保存（表示用）
+                        'matched_words': matched_words[:20],  # 表示用に20語のみ保存
                         'unmatched_words': unmatched_words,  # 全てのカバーされていない単語を保存
                         'unmatched_count': len(unmatched_words)
                     }
@@ -605,6 +610,7 @@ def perform_vocabulary_analysis(extraction_data):
                         'source_file': source_file,
                         'total_words': len(extracted_words),
                         'unique_words': len(unique_words),
+                        'all_extracted_words': unique_words,  # 全抽出語彙を保存（基礎語彙除外用）
                         'vocabulary_coverage': vocab_coverage,
                         'pages_processed': entry.get('pages_processed', 0)
                     }
