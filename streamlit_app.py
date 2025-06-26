@@ -727,6 +727,32 @@ def show_analysis_dashboard(analysis_data):
     with tab3:
         show_comparison_analysis(filtered_data)
 
+def filter_vocabulary_for_display(vocabulary_summary: dict, exclude_basic: bool = False) -> dict:
+    """表示用に単語帳をフィルタリング（Target 1200を除外）"""
+    if not exclude_basic:
+        # 標準モードではTarget 1200も表示
+        return vocabulary_summary
+    
+    # 高度語彙モードではTarget 1200を除外して表示
+    filtered_summary = {}
+    for vocab_name, summary in vocabulary_summary.items():
+        if vocab_name != 'Target 1200':
+            filtered_summary[vocab_name] = summary
+    
+    return filtered_summary
+
+def filter_vocabulary_coverage_for_display(vocabulary_coverage: dict, exclude_basic: bool = False) -> dict:
+    """大学データの単語帳カバレッジを表示用にフィルタリング"""
+    if not exclude_basic:
+        return vocabulary_coverage
+    
+    filtered_coverage = {}
+    for vocab_name, coverage in vocabulary_coverage.items():
+        if vocab_name != 'Target 1200':
+            filtered_coverage[vocab_name] = coverage
+    
+    return filtered_coverage
+
 def show_basic_exclusion_stats(analysis_data: dict):
     """基礎語彙除外の統計情報を表示"""
     university_analysis = analysis_data.get('university_analysis', {})
@@ -850,10 +876,13 @@ def show_overview_analysis(analysis_data: dict):
         )
     
     with col2:
-        # 最高カバレッジ率を計算
+        # 最高カバレッジ率を計算（Target 1200を除外）
+        exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+        display_vocabulary_summary = filter_vocabulary_for_display(vocabulary_summary, exclude_basic)
+        
         best_coverage = 0
         best_vocab = "N/A"
-        for vocab_name, summary in vocabulary_summary.items():
+        for vocab_name, summary in display_vocabulary_summary.items():
             if summary.get('average_coverage_rate', 0) > best_coverage:
                 best_coverage = summary.get('average_coverage_rate', 0)
                 best_vocab = vocab_name
@@ -877,9 +906,16 @@ def show_overview_analysis(analysis_data: dict):
     if vocabulary_summary:
         st.subheader("📚 単語帳別パフォーマンス")
         
+        # Target 1200を除外した表示用データを準備
+        exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+        display_vocabulary_summary = filter_vocabulary_for_display(vocabulary_summary, exclude_basic)
+        
+        if exclude_basic:
+            st.caption("💫 Target 1200は基礎語彙として表示から除外されています")
+        
         # データ準備
         vocab_data = []
-        for vocab_name, summary in vocabulary_summary.items():
+        for vocab_name, summary in display_vocabulary_summary.items():
             vocab_data.append({
                 '単語帳': vocab_name,
                 'カバレッジ率(%)': summary.get('average_coverage_rate', 0),
@@ -952,7 +988,11 @@ def show_overview_analysis(analysis_data: dict):
         if selected_universities and university_analysis:
             uncovered_stats = []
             
-            for vocab_name in vocabulary_summary.keys():
+            # 表示用にフィルタリングした単語帳リストを使用
+            exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+            display_vocabulary_summary = filter_vocabulary_for_display(vocabulary_summary, exclude_basic)
+            
+            for vocab_name in display_vocabulary_summary.keys():
                 total_unmatched = 0
                 total_words = 0
                 
@@ -1053,9 +1093,15 @@ def show_university_analysis(analysis_data: dict):
         """)
     
     with col3:
+        # 表示用の単語帳数を計算
+        exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+        vocab_coverage_temp = university_data.get('vocabulary_coverage', {})
+        display_vocab_coverage_temp = filter_vocabulary_coverage_for_display(vocab_coverage_temp, exclude_basic)
+        vocab_count = len(display_vocab_coverage_temp)
+        
         st.info(f"""
         **📚 語彙分析**
-        - 単語帳数: {len(university_data.get('vocabulary_coverage', {}))}
+        - 単語帳数: {vocab_count}
         """)
     
     st.markdown("---")
@@ -1064,9 +1110,17 @@ def show_university_analysis(analysis_data: dict):
     st.subheader("📚 単語帳別パフォーマンス")
     
     vocab_coverage = university_data.get('vocabulary_coverage', {})
+    
+    # Target 1200を表示から除外
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+    display_vocab_coverage = filter_vocabulary_coverage_for_display(vocab_coverage, exclude_basic)
+    
+    if exclude_basic:
+        st.caption("💫 Target 1200は基礎語彙として表示から除外されています")
+    
     vocab_df_data = []
     
-    for vocab_name, vocab_stats in vocab_coverage.items():
+    for vocab_name, vocab_stats in display_vocab_coverage.items():
         vocab_df_data.append({
             '単語帳': vocab_name,
             '一致語数': vocab_stats.get('matched_words_count', 0),
@@ -1257,6 +1311,11 @@ def show_comparison_analysis(analysis_data: dict):
     # 大学間比較テーブル
     st.subheader("📊 大学間比較")
     
+    # 基礎語彙除外の表示
+    exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+    if exclude_basic:
+        st.caption("💫 Target 1200は基礎語彙として表示から除外されています")
+    
     comparison_data = []
     university_analysis = analysis_data.get('university_analysis', {})
     
@@ -1264,11 +1323,14 @@ def show_comparison_analysis(analysis_data: dict):
         univ_data = university_analysis.get(univ, {})
         vocab_coverage = univ_data.get('vocabulary_coverage', {})
         
-        # 最高カバレッジ率と最適単語帳を探す
+        # 最高カバレッジ率と最適単語帳を探す（Target 1200を除外）
+        exclude_basic = st.session_state.get('exclude_basic_vocab', False)
+        display_vocab_coverage = filter_vocabulary_coverage_for_display(vocab_coverage, exclude_basic)
+        
         best_coverage = 0
         best_vocab = "N/A"
         
-        for vocab_name, stats in vocab_coverage.items():
+        for vocab_name, stats in display_vocab_coverage.items():
             coverage = stats.get('target_coverage_rate', 0)
             if coverage > best_coverage:
                 best_coverage = coverage
