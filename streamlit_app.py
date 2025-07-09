@@ -122,26 +122,24 @@ def merge_multiple_json_files(uploaded_files):
             uploaded_file.seek(0)
             file_content = json.load(uploaded_file)
             
-            # 新しいフォーマット対応
-            if 'file_info' in file_content and 'content' in file_content:
-                # 新しいフォーマット: {"file_info": {...}, "content": {"extracted_words": [...]}}
-                file_info = file_content.get('file_info', {})
-                content = file_content.get('content', {})
-                extraction_results = file_content.get('extraction_results', {})
-                
-                # サマリー情報を統合
-                combined_data['extraction_summary']['total_source_files'] += 1
-                combined_data['extraction_summary']['total_words_extracted'] += extraction_results.get('total_words', 0)
-                
-                # 抽出データを統合
-                extracted_entry = {
-                    'source_file': file_info.get('source_file', uploaded_file.name),
-                    'pages_processed': file_info.get('processed_pages', 0),
-                    'ocr_confidence': file_info.get('ocr_confidence', 0),
-                    'extracted_words': content.get('extracted_words', []),
-                    'english_passages': content.get('english_passages', [])
-                }
-                combined_data['extracted_data'].append(extracted_entry)
+            # 新しいフォーマット対応 (ファイル名がキーになる形式)
+            if 'extracted_data' not in file_content:
+                # 新しいフォーマット: {"filename.pdf": {"extracted_words": [...], "pages_processed": 3, ...}}
+                for filename, content in file_content.items():
+                    if isinstance(content, dict) and 'extracted_words' in content:
+                        # サマリー情報を統合
+                        combined_data['extraction_summary']['total_source_files'] += 1
+                        combined_data['extraction_summary']['total_words_extracted'] += len(content.get('extracted_words', []))
+                        
+                        # 抽出データを統合
+                        extracted_entry = {
+                            'source_file': filename,
+                            'pages_processed': content.get('pages_processed', 0),
+                            'ocr_confidence': content.get('processing_stats', {}).get('average_confidence', 0),
+                            'extracted_words': content.get('extracted_words', []),
+                            'english_passages': content.get('pure_english_text', [])
+                        }
+                        combined_data['extracted_data'].append(extracted_entry)
                 
             else:
                 # 旧フォーマット対応
