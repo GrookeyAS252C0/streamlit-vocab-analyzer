@@ -119,9 +119,31 @@ class MultiVocabularyAnalyzer:
         
         return vocabulary_sets
     
+    def _is_new_format(self, data: Dict) -> bool:
+        """
+        JSONデータが新しい形式かどうかを判定
+        
+        Args:
+            data: JSONデータ
+            
+        Returns:
+            True if 新形式, False if 旧形式
+        """
+        # 新形式の特徴: トップレベルにファイル名キーがあり、
+        # その値が'extracted_words'キーを含む辞書
+        if 'extracted_data' in data:
+            return False  # 旧形式
+        
+        # 新形式の検出: 最初のキーの値が辞書で'extracted_words'を含む
+        for key, value in data.items():
+            if isinstance(value, dict) and 'extracted_words' in value:
+                return True
+        
+        return False
+    
     def load_extracted_data(self, file_path: str) -> Tuple[List[str], Dict]:
         """
-        extraction_results_pure_english.jsonから抽出データを読み込み
+        抽出データを読み込み（新旧両方の形式に対応）
         
         Args:
             file_path: 抽出結果JSONファイルのパス
@@ -135,9 +157,20 @@ class MultiVocabularyAnalyzer:
             
             # 全ての抽出単語を収集
             all_extracted_words = []
-            for item in data.get('extracted_data', []):
-                words = item.get('extracted_words', [])
-                all_extracted_words.extend(words)
+            
+            # 新しいJSON形式の検出と処理
+            if self._is_new_format(data):
+                logger.info("新しいJSON形式を検出しました")
+                for filename, content in data.items():
+                    if isinstance(content, dict) and 'extracted_words' in content:
+                        words = content.get('extracted_words', [])
+                        all_extracted_words.extend(words)
+            else:
+                # 旧形式の処理
+                logger.info("旧JSON形式を検出しました")
+                for item in data.get('extracted_data', []):
+                    words = item.get('extracted_words', [])
+                    all_extracted_words.extend(words)
             
             # 正規化（lemmatization付き）
             normalized_words = []
@@ -290,7 +323,7 @@ class MultiVocabularyAnalyzer:
     
     def analyze_by_university_multi(self, vocabulary_sets: Dict[str, Set[str]], original_data: Dict) -> Dict:
         """
-        大学別の複数単語帳語彙分析
+        大学別の複数単語帳語彙分析（新旧両形式対応）
         
         Args:
             vocabulary_sets: {単語帳名: 単語セット}の辞書
@@ -301,62 +334,104 @@ class MultiVocabularyAnalyzer:
         """
         university_analysis = {}
         
-        for item in original_data.get('extracted_data', []):
-            source_file = item.get('source_file', '')
-            words = item.get('extracted_words', [])
-            
-            # 大学名を抽出（ファイル名から）
-            university_name = self._extract_university_name(source_file)
-            
-            # 単語を正規化（lemmatization付き）
-            normalized_words = []
-            for word in words:
-                cleaned_word = re.sub(r'[^\w]', '', word.lower())
-                if len(cleaned_word) >= 2 and not cleaned_word.isdigit():
-                    # lemmatization（原形化）
-                    lemmatized = self.lemmatizer.lemmatize(cleaned_word, pos='v')  # 動詞として
-                    lemmatized = self.lemmatizer.lemmatize(lemmatized, pos='n')    # 名詞として
-                    normalized_words.append(lemmatized)
-            
-            unique_words = set(normalized_words)
-            word_frequencies = Counter(normalized_words)
-            
-            # 各単語帳との一致分析
-            vocabulary_coverage = {}
-            for book_name, target_words in vocabulary_sets.items():
-                matched_words = target_words.intersection(unique_words)
+        # 新旧形式を判定して処理
+        if self._is_new_format(original_data):
+            # 新形式の処理
+            for filename, content in original_data.items():
+                if isinstance(content, dict) and 'extracted_words' in content:
+                    source_file = filename
+                    words = content.get('extracted_words', [])
+                    
+                    # 大学名を抽出（ファイル名から）
+                    university_name = self._extract_university_name(source_file)
+                    
+                    # 単語を正規化（lemmatization付き）
+                    normalized_words = []
+                    for word in words:
+                        cleaned_word = re.sub(r'[^\w]', '', word.lower())
+                        if len(cleaned_word) >= 2 and not cleaned_word.isdigit():
+                            # lemmatization（原形化）
+                            lemmatized = self.lemmatizer.lemmatize(cleaned_word, pos='v')  # 動詞として
+                            lemmatized = self.lemmatizer.lemmatize(lemmatized, pos='n')    # 名詞として
+                            normalized_words.append(lemmatized)
+                    
+                    # 分析処理を実行
+                    self._process_university_data(university_name, source_file, normalized_words, 
+                                                vocabulary_sets, university_analysis, content)
+        else:
+            # 旧形式の処理
+            for item in original_data.get('extracted_data', []):
+                source_file = item.get('source_file', '')
+                words = item.get('extracted_words', [])
                 
-                # 統計計算
-                word_count = len(normalized_words)
-                unique_count = len(unique_words)
-                matched_count = len(matched_words)
-                coverage_rate = (matched_count / len(target_words) * 100) if target_words else 0
-                precision = (matched_count / unique_count * 100) if unique_count else 0
+                # 大学名を抽出（ファイル名から）
+                university_name = self._extract_university_name(source_file)
                 
-                # 頻度分析
-                matched_frequencies = {word: word_frequencies[word] for word in matched_words}
+                # 単語を正規化（lemmatization付き）
+                normalized_words = []
+                for word in words:
+                    cleaned_word = re.sub(r'[^\w]', '', word.lower())
+                    if len(cleaned_word) >= 2 and not cleaned_word.isdigit():
+                        # lemmatization（原形化）
+                        lemmatized = self.lemmatizer.lemmatize(cleaned_word, pos='v')  # 動詞として
+                        lemmatized = self.lemmatizer.lemmatize(lemmatized, pos='n')    # 名詞として
+                        normalized_words.append(lemmatized)
                 
-                vocabulary_coverage[book_name] = {
-                    'target_total_words': len(target_words),
-                    'matched_words_count': matched_count,
-                    'target_coverage_rate': round(coverage_rate, 2),
-                    'extraction_precision': round(precision, 2),
-                    'matched_words': sorted(list(matched_words)),
-                    'matched_word_frequencies': dict(sorted(matched_frequencies.items(), 
-                                                           key=lambda x: x[1], reverse=True)[:10])
-                }
-            
-            university_analysis[university_name] = {
-                'source_file': source_file,
-                'total_words': len(normalized_words),
-                'unique_words': len(unique_words),
-                'vocabulary_coverage': vocabulary_coverage,
-                'word_frequencies': dict(word_frequencies.most_common(20)),
-                'ocr_confidence': item.get('ocr_confidence', 0),
-                'pages_processed': item.get('pages_processed', 0)
-            }
+                # 分析処理を実行
+                self._process_university_data(university_name, source_file, normalized_words, 
+                                            vocabulary_sets, university_analysis, item)
         
         return university_analysis
+    
+    def _process_university_data(self, university_name: str, source_file: str, normalized_words: List[str], 
+                               vocabulary_sets: Dict[str, Set[str]], university_analysis: Dict, item: Dict):
+        """
+        大学データの共通処理ロジック
+        
+        Args:
+            university_name: 大学名
+            source_file: ソースファイル名
+            normalized_words: 正規化済み単語リスト
+            vocabulary_sets: 単語帳セット
+            university_analysis: 分析結果辞書（更新される）
+            item: 元データアイテム
+        """
+        unique_words = set(normalized_words)
+        word_frequencies = Counter(normalized_words)
+        
+        # 各単語帳との一致分析
+        vocabulary_coverage = {}
+        for book_name, target_words in vocabulary_sets.items():
+            matched_words = target_words.intersection(unique_words)
+            
+            # 統計計算
+            unique_count = len(unique_words)
+            matched_count = len(matched_words)
+            coverage_rate = (matched_count / len(target_words) * 100) if target_words else 0
+            precision = (matched_count / unique_count * 100) if unique_count else 0
+            
+            # 頻度分析
+            matched_frequencies = {word: word_frequencies[word] for word in matched_words}
+            
+            vocabulary_coverage[book_name] = {
+                'target_total_words': len(target_words),
+                'matched_words_count': matched_count,
+                'target_coverage_rate': round(coverage_rate, 2),
+                'extraction_precision': round(precision, 2),
+                'matched_words': sorted(list(matched_words)),
+                'matched_word_frequencies': dict(sorted(matched_frequencies.items(), 
+                                                       key=lambda x: x[1], reverse=True)[:10])
+            }
+        
+        university_analysis[university_name] = {
+            'source_file': source_file,
+            'total_words': len(normalized_words),
+            'unique_words': len(unique_words),
+            'vocabulary_coverage': vocabulary_coverage,
+            'word_frequencies': dict(word_frequencies.most_common(20)),
+            'ocr_confidence': item.get('ocr_confidence', 0),
+            'pages_processed': item.get('pages_processed', 0)
+        }
     
     def _extract_university_name(self, filename: str) -> str:
         """
@@ -400,9 +475,20 @@ class MultiVocabularyAnalyzer:
             return '上智大学'
         elif '青山学院大学' in filename:
             return '青山学院大学'
+        elif '東京理科大学' in filename:
+            if '理学部' in filename:
+                return '東京理科大学_理学部'
+            elif '工学部' in filename:
+                return '東京理科大学_工学部'
+            elif '薬学部' in filename:
+                return '東京理科大学_薬学部'
+            elif '理工学部' in filename:
+                return '東京理科大学_理工学部'
+            else:
+                return '東京理科大学'
         else:
             # その他の場合は最初の単語を使用
-            base_name = filename.replace('.pdf', '')
+            base_name = filename.replace('.pdf', '').replace('.json', '')
             parts = base_name.split('_')
             return parts[0] if parts else filename
 
@@ -623,10 +709,16 @@ class MultiVocabularyAnalyzer:
 
 def main():
     """メイン実行関数"""
+    import sys
+    
     analyzer = MultiVocabularyAnalyzer()
     
-    # ファイルパス設定
-    extraction_file = "extraction_results_pure_english.json"
+    # ファイルパス設定（コマンドライン引数対応）
+    if len(sys.argv) > 1:
+        extraction_file = sys.argv[1]
+    else:
+        extraction_file = "extraction_results_pure_english.json"
+    
     output_file = "multi_vocabulary_analysis_report.json"
     
     try:
