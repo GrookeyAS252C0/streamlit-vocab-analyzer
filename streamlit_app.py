@@ -14,6 +14,7 @@ import sys
 import os
 from pathlib import Path
 import logging
+import nltk
 
 # パスの設定
 current_dir = Path(__file__).parent
@@ -27,6 +28,36 @@ from reading_assist_analyzer.core.sentence_analyzer import SentenceAnalyzer
 # ログ設定
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# NLTKデータの初期化（Streamlit Cloud対応）
+@st.cache_resource
+def download_nltk_data():
+    """NLTKデータのダウンロード（初回のみ実行）"""
+    required_data = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'averaged_perceptron_tagger', 'omw-1.4']
+    
+    for data_name in required_data:
+        try:
+            if data_name == 'punkt':
+                nltk.data.find('tokenizers/punkt')
+            elif data_name == 'punkt_tab':
+                nltk.data.find('tokenizers/punkt_tab')
+            elif data_name in ['stopwords', 'wordnet', 'omw-1.4']:
+                nltk.data.find(f'corpora/{data_name}')
+            else:
+                nltk.data.find(f'taggers/{data_name}')
+        except LookupError:
+            logger.info(f"Downloading NLTK data: {data_name}")
+            try:
+                nltk.download(data_name, quiet=True)
+                st.success(f"NLTK {data_name} をダウンロードしました")
+            except Exception as e:
+                logger.warning(f"Failed to download {data_name}: {e}")
+                st.warning(f"NLTK {data_name} のダウンロードに失敗しました: {e}")
+    
+    return True
+
+# NLTKデータのダウンロード実行
+download_nltk_data()
 
 # Streamlit設定
 st.set_page_config(
@@ -110,11 +141,15 @@ class ReadingAssistApp:
     def initialize_analyzers(self):
         """分析エンジンの初期化"""
         try:
+            # NLTKデータの再確認
+            download_nltk_data()
+            
             self.text_analyzer = TextAnalyzer(self.config.get('analysis', {}))
             logger.info("分析エンジンを初期化しました")
         except Exception as e:
             logger.error(f"分析エンジン初期化エラー: {e}")
-            st.error("分析エンジンの初期化に失敗しました")
+            st.error(f"分析エンジンの初期化に失敗しました: {e}")
+            self.text_analyzer = None
     
     def run(self):
         """メインアプリケーション実行"""
@@ -255,6 +290,10 @@ class ReadingAssistApp:
         
         if not any([enable_vocab, enable_grammar, enable_sentence]):
             st.warning("少なくとも1つの分析オプションを選択してください")
+            return
+        
+        if self.text_analyzer is None:
+            st.error("分析エンジンが初期化されていません。ページを再読み込みしてください。")
             return
         
         # 分析実行

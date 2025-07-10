@@ -40,12 +40,14 @@ class TextPreprocessor:
     
     def _download_nltk_data(self):
         """必要なNLTKデータをダウンロード"""
-        required_data = ['punkt', 'stopwords', 'wordnet', 'averaged_perceptron_tagger']
+        required_data = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'averaged_perceptron_tagger']
         
         for data_name in required_data:
             try:
                 if data_name == 'punkt':
                     nltk.data.find('tokenizers/punkt')
+                elif data_name == 'punkt_tab':
+                    nltk.data.find('tokenizers/punkt_tab')
                 elif data_name in ['stopwords', 'wordnet']:
                     nltk.data.find(f'corpora/{data_name}')
                 else:
