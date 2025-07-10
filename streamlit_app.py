@@ -20,10 +20,15 @@ import nltk
 current_dir = Path(__file__).parent
 sys.path.append(str(current_dir / "reading_assist_analyzer"))
 
-from reading_assist_analyzer.core.text_analyzer import TextAnalyzer
-from reading_assist_analyzer.core.vocab_analyzer import VocabularyAnalyzer
-from reading_assist_analyzer.core.grammar_analyzer import GrammarAnalyzer
-from reading_assist_analyzer.core.sentence_analyzer import SentenceAnalyzer
+try:
+    from reading_assist_analyzer.core.text_analyzer import TextAnalyzer
+    from reading_assist_analyzer.core.vocab_analyzer import VocabularyAnalyzer
+    from reading_assist_analyzer.core.grammar_analyzer import GrammarAnalyzer
+    from reading_assist_analyzer.core.sentence_analyzer import SentenceAnalyzer
+    MODULES_LOADED = True
+except ImportError as e:
+    logger.error(f"Failed to import analysis modules: {e}")
+    MODULES_LOADED = False
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -49,10 +54,9 @@ def download_nltk_data():
             logger.info(f"Downloading NLTK data: {data_name}")
             try:
                 nltk.download(data_name, quiet=True)
-                st.success(f"NLTK {data_name} をダウンロードしました")
+                logger.info(f"Downloaded NLTK {data_name}")
             except Exception as e:
                 logger.warning(f"Failed to download {data_name}: {e}")
-                st.warning(f"NLTK {data_name} のダウンロードに失敗しました: {e}")
     
     return True
 
@@ -140,6 +144,11 @@ class ReadingAssistApp:
     
     def initialize_analyzers(self):
         """分析エンジンの初期化"""
+        if not MODULES_LOADED:
+            st.error("分析モジュールの読み込みに失敗しました。アプリを再起動してください。")
+            self.text_analyzer = None
+            return
+            
         try:
             # NLTKデータの再確認
             download_nltk_data()
