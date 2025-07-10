@@ -555,33 +555,34 @@ class MultiVocabularyAnalyzer:
         """
         recommendations = []
         
-        # 各単語帳のカバレッジ率を確認
+        # 各単語帳の結果を確認
         vocabulary_coverage = multi_stats['vocabulary_coverage']
         
         # Target 1900の結果
         if 'Target 1900' in vocabulary_coverage:
-            target1900_coverage = vocabulary_coverage['Target 1900']['vocabulary_utilization_rate']
-            if target1900_coverage < 20:
-                recommendations.append("Target 1900カバレッジが低いです。基本語彙の強化が必要です。")
-            elif target1900_coverage < 40:
-                recommendations.append("Target 1900カバレッジは中程度です。重要単語の復習に重点を置いてください。")
+            target1900_utilization = vocabulary_coverage['Target 1900']['vocabulary_utilization_rate']
+            target1900_coverage = vocabulary_coverage['Target 1900']['vocabulary_coverage_rate']
+            if target1900_coverage < 30:
+                recommendations.append(f"Target 1900語彙カバレッジ率が低いです。入試英単語の{target1900_coverage:.1f}%しかTarget 1900に含まれません。")
+            elif target1900_coverage < 50:
+                recommendations.append(f"Target 1900語彙カバレッジ率は中程度です。入試英単語の{target1900_coverage:.1f}%をカバーしています。")
             else:
-                recommendations.append("Target 1900カバレッジは良好です。上級語彙学習に進むことをお勧めします。")
+                recommendations.append(f"Target 1900語彙カバレッジ率は良好です。入試英単語の{target1900_coverage:.1f}%をカバーしています。")
         
-        # 最もカバレッジ率の高い単語帳を特定
-        best_book = max(vocabulary_coverage.items(), key=lambda x: x[1]['vocabulary_utilization_rate'])
-        recommendations.append(f"最も適合性が高い単語帳: {best_book[0]} (単語帳使用率: {best_book[1]['vocabulary_utilization_rate']:.1f}%)")
+        # 最も語彙カバレッジ率の高い単語帳を特定
+        best_book = max(vocabulary_coverage.items(), key=lambda x: x[1]['vocabulary_coverage_rate'])
+        recommendations.append(f"最も適合性が高い単語帳: {best_book[0]} (語彙カバレッジ率: {best_book[1]['vocabulary_coverage_rate']:.1f}%)")
         
         # 複数単語帳での総合的な推奨
         high_coverage_books = [name for name, data in vocabulary_coverage.items() 
-                              if data['vocabulary_utilization_rate'] > 25]
+                              if data['vocabulary_coverage_rate'] > 40]
         
         if len(high_coverage_books) >= 3:
-            recommendations.append("複数の単語帳で高いカバレッジを達成しています。語彙力は十分です。")
+            recommendations.append("複数の単語帳で高い語彙カバレッジ率を達成しています。適切な単語帳を選択できています。")
         elif len(high_coverage_books) >= 1:
-            recommendations.append(f"{', '.join(high_coverage_books)}での学習を重点的に行うことをお勧めします。")
+            recommendations.append(f"{', '.join(high_coverage_books)}が入試語彙をよくカバーしています。この単語帳での学習をお勧めします。")
         else:
-            recommendations.append("全般的に語彙力強化が必要です。基礎単語帳から始めることをお勧めします。")
+            recommendations.append("どの単語帳も入試語彙のカバレッジ率が低いです。入試レベルが高いか、専門用語が多い可能性があります。")
         
         return recommendations
     
@@ -591,23 +592,23 @@ class MultiVocabularyAnalyzer:
         """
         recommendations = []
         
-        coverage_rate = basic_stats['vocabulary_utilization_rate']
-        precision = basic_stats['vocabulary_coverage_rate']
+        utilization_rate = basic_stats['vocabulary_utilization_rate']
+        coverage_rate = basic_stats['vocabulary_coverage_rate']
         
         if coverage_rate < 30:
-            recommendations.append("Target 1900カバレッジが低いです。より多様な教材での学習を推奨します。")
+            recommendations.append(f"Target 1900語彙カバレッジ率が低いです({coverage_rate:.1f}%)。入試語彙の多くがTarget 1900外です。")
         elif coverage_rate < 50:
-            recommendations.append("Target 1900カバレッジは中程度です。重要単語の復習に重点を置いてください。")
+            recommendations.append(f"Target 1900語彙カバレッジ率は中程度です({coverage_rate:.1f}%)。適切な単語帳選択です。")
         else:
-            recommendations.append("Target 1900カバレッジは良好です。応用レベルの語彙学習に進むことをお勧めします。")
+            recommendations.append(f"Target 1900語彙カバレッジ率は良好です({coverage_rate:.1f}%)。入試語彙をよくカバーしています。")
         
-        if precision < 40:
-            recommendations.append("抽出された単語の多くがTarget 1900外です。基礎語彙の強化が必要です。")
+        if utilization_rate < 10:
+            recommendations.append(f"Target 1900使用率が低いです({utilization_rate:.1f}%)。入試レベルが高いか、専門用語が多い可能性があります。")
         
         # 頻度分析に基づく推奨
         high_freq = frequency_analysis.get('high_frequency', {})
         if high_freq.get('coverage_rate', 0) > 80:
-            recommendations.append("高頻度単語のTarget 1900カバレッジは優秀です。")
+            recommendations.append("高頻度単語のTarget 1900マッチ率は優秀です。")
         else:
             recommendations.append("頻出単語でTarget 1900外の語彙があります。これらの習得を優先してください。")
         
@@ -623,8 +624,8 @@ class MultiVocabularyAnalyzer:
         print(f"抽出ユニーク単語数: {stats['extracted_unique_words']:,}")
         print(f"一致単語数: {stats['matched_words_count']:,}")
         print()
-        print(f"🎯 Target 1900使用率: {stats['vocabulary_utilization_rate']:.2f}%")
-        print(f"🔍 語彙カバレッジ率: {stats['vocabulary_coverage_rate']:.2f}%")
+        print(f"🎯 Target 1900単語帳使用率: {stats['vocabulary_utilization_rate']:.2f}%")
+        print(f"🔍 入試語彙カバレッジ率: {stats['vocabulary_coverage_rate']:.2f}%")
         print()
         print("上位一致単語(頻度順):")
         for word, freq in list(stats['matched_word_frequencies'].items())[:10]:
@@ -641,11 +642,11 @@ class MultiVocabularyAnalyzer:
         print()
         
         # 各単語帳のカバレッジ率表示
-        print("📊 単語帳別カバレッジ率:")
+        print("📊 単語帳別分析結果:")
         for book_name, data in multi_stats['vocabulary_coverage'].items():
-            print(f"  • {book_name}: {data['vocabulary_utilization_rate']:.2f}% "
-                  f"(一致: {data['matched_words_count']:,}/{data['target_total_words']:,}語, "
-                  f"語彙カバレッジ率: {data['vocabulary_coverage_rate']:.1f}%)")
+            print(f"  • {book_name}: 使用率{data['vocabulary_utilization_rate']:.2f}% "
+                  f"(一致: {data['matched_words_count']:,}/{data['target_total_words']:,}語), "
+                  f"語彙カバレッジ率: {data['vocabulary_coverage_rate']:.1f}%")
         
         print("\n🔥 最頻出単語:")
         for word, freq in list(multi_stats['word_frequencies'].items())[:10]:
@@ -667,12 +668,12 @@ class MultiVocabularyAnalyzer:
             print(f"  処理ページ数: {data['pages_processed']}")
             print()
             
-            # 各単語帳のカバレッジ率表示
-            print(f"  📚 単語帳別カバレッジ率:")
+            # 各単語帳の分析結果表示
+            print(f"  📚 単語帳別分析結果:")
             for book_name, book_data in data['vocabulary_coverage'].items():
-                print(f"    • {book_name}: {book_data['vocabulary_utilization_rate']:.2f}% "
-                      f"(一致: {book_data['matched_words_count']:,}語, "
-                      f"語彙カバレッジ率: {book_data['vocabulary_coverage_rate']:.1f}%)")
+                print(f"    • {book_name}: 使用率{book_data['vocabulary_utilization_rate']:.2f}% "
+                      f"(一致: {book_data['matched_words_count']:,}語), "
+                      f"語彙カバレッジ率: {book_data['vocabulary_coverage_rate']:.1f}%")
         
         print("="*80)
     
@@ -689,7 +690,7 @@ class MultiVocabularyAnalyzer:
             print(f"  ユニーク単語数: {data['unique_words']:,}")
             print(f"  Target 1900一致数: {data['matched_words_count']:,}")
             print(f"  単語帳使用率: {data['vocabulary_utilization_rate']:.2f}%")
-            print(f"  語彙カバレッジ率: {data['vocabulary_coverage_rate']:.2f}%")
+            print(f"  入試語彙カバレッジ率: {data['vocabulary_coverage_rate']:.2f}%")
             print(f"  OCR信頼度: {data['ocr_confidence']:.1%}")
             print(f"  処理ページ数: {data['pages_processed']}")
             
