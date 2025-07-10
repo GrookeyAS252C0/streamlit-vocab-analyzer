@@ -1,0 +1,58 @@
+{
+  "app": {
+    "name": "ReadingAssist Analyzer",
+    "version": "1.0.0",
+    "description": "英文読解における単語帳有効性と文章構造の総合分析アプリ"
+  },
+  "analysis": {
+    "vocabulary": {
+      "lemmatization": true,
+      "remove_stopwords": true,
+      "min_word_length": 2,
+      "exclude_numbers": true
+    },
+    "grammar": {
+      "enable_pos_tagging": true,
+      "enable_dependency_parsing": true,
+      "min_sentence_length": 3
+    },
+    "sentence": {
+      "min_sentence_words": 3,
+      "max_sentence_words": 100,
+      "complexity_threshold": 20
+    }
+  },
+  "vocabulary_books": {
+    "default_books": [
+      "Target 1900",
+      "Target 1400", 
+      "Target 1200",
+      "システム英単語",
+      "LEAP",
+      "鉄壁"
+    ],
+    "data_path": "data/vocabulary_books/",
+    "encoding": "utf-8-sig"
+  },
+  "grammar_patterns": {
+    "data_path": "data/grammar_patterns/",
+    "rules_file": "config/grammar_rules.json"
+  },
+  "output": {
+    "report_format": ["json", "html", "pdf"],
+    "chart_format": "png",
+    "export_detailed_data": true
+  },
+  "ui": {
+    "theme": "light",
+    "max_file_size_mb": 10,
+    "supported_formats": [".txt", ".json", ".csv", ".docx"],
+    "default_sample_text": "data/sample_texts/default.txt"
+  },
+  "performance": {
+    "cache_enabled": true,
+    "cache_ttl_hours": 24,
+    "max_text_length": 50000,
+    "parallel_processing": true
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "grammar_patterns": {
+    "関係代名詞": {
+      "patterns": [
+        "\\b(who|which|that|whose|whom)\\b",
+        "\\bwhose\\s+\\w+\\b",
+        "\\b\\w+\\s+(who|which|that)\\s+\\w+\\b"
+      ],
+      "description": "関係代名詞の使用",
+      "difficulty_level": "intermediate",
+      "importance": "high"
+    },
+    "仮定法": {
+      "patterns": [
+        "\\bif\\s+\\w+\\s+(were|had)\\b",
+        "\\bwish\\s+\\w+\\s+(were|had|could)\\b",
+        "\\bwould\\s+have\\s+\\w+ed\\b",
+        "\\bshould\\s+have\\s+\\w+ed\\b"
+      ],
+      "description": "仮定法（過去・過去完了）",
+      "difficulty_level": "advanced",
+      "importance": "high"
+    },
+    "不定詞": {
+      "patterns": [
+        "\\bto\\s+\\w+\\b(?!\\s+(be|have|do))",
+        "\\bin\\s+order\\s+to\\s+\\w+\\b",
+        "\\btoo\\s+\\w+\\s+to\\s+\\w+\\b"
+      ],
+      "description": "不定詞の用法",
+      "difficulty_level": "intermediate",
+      "importance": "high"
+    },
+    "動名詞": {
+      "patterns": [
+        "\\b\\w+ing\\b(?=\\s+(is|are|was|were))",
+        "\\benjoy\\s+\\w+ing\\b",
+        "\\bavoid\\s+\\w+ing\\b",
+        "\\bby\\s+\\w+ing\\b"
+      ],
+      "description": "動名詞の使用",
+      "difficulty_level": "intermediate", 
+      "importance": "medium"
+    },
+    "分詞構文": {
+      "patterns": [
+        "\\b\\w+ing\\s*,\\s*\\w+",
+        "\\b\\w+ed\\s*,\\s*\\w+",
+        "\\bbeing\\s+\\w+ed\\b",
+        "\\bhaving\\s+\\w+ed\\b"
+      ],
+      "description": "分詞構文（現在分詞・過去分詞）",
+      "difficulty_level": "advanced",
+      "importance": "high"
+    },
+    "比較級・最上級": {
+      "patterns": [
+        "\\b\\w+er\\s+than\\b",
+        "\\bmore\\s+\\w+\\s+than\\b",
+        "\\bthe\\s+\\w+est\\b",
+        "\\bthe\\s+most\\s+\\w+\\b",
+        "\\bas\\s+\\w+\\s+as\\b"
+      ],
+      "description": "比較表現",
+      "difficulty_level": "intermediate",
+      "importance": "medium"
+    },
+    "完了形": {
+      "patterns": [
+        "\\bhave\\s+\\w+ed\\b",
+        "\\bhas\\s+\\w+ed\\b", 
+        "\\bhad\\s+\\w+ed\\b",
+        "\\bwill\\s+have\\s+\\w+ed\\b",
+        "\\bhave\\s+been\\s+\\w+ing\\b"
+      ],
+      "description": "完了形（現在・過去・未来完了）",
+      "difficulty_level": "intermediate",
+      "importance": "high"
+    },
+    "受動態": {
+      "patterns": [
+        "\\b(is|are|was|were|be|been)\\s+\\w+ed\\b",
+        "\\bget\\s+\\w+ed\\b",
+        "\\bhave\\s+been\\s+\\w+ed\\b"
+      ],
+      "description": "受動態の構文",
+      "difficulty_level": "intermediate",
+      "importance": "high"
+    },
+    "助動詞": {
+      "patterns": [
+        "\\b(can|could|will|would|shall|should|may|might|must)\\s+\\w+\\b",
+        "\\bhave\\s+to\\s+\\w+\\b",
+        "\\bused\\s+to\\s+\\w+\\b",
+        "\\bwould\\s+rather\\s+\\w+\\b"
+      ],
+      "description": "助動詞の使用",
+      "difficulty_level": "basic",
+      "importance": "high"
+    },
+    "前置詞句": {
+      "patterns": [
+        "\\b(in|on|at|by|for|with|from|to|of|about|under|over)\\s+\\w+\\b",
+        "\\bin\\s+spite\\s+of\\b",
+        "\\bbecause\\s+of\\b",
+        "\\binstead\\s+of\\b"
+      ],
+      "description": "前置詞と前置詞句",
+      "difficulty_level": "basic",
+      "importance": "medium"
+    },
+    "接続詞": {
+      "patterns": [
+        "\\b(although|though|while|whereas|however|nevertheless|furthermore|moreover)\\b",
+        "\\bnot\\s+only\\s+\\w+\\s+but\\s+also\\b",
+        "\\beither\\s+\\w+\\s+or\\b",
+        "\\bneither\\s+\\w+\\s+nor\\b"
+      ],
+      "description": "接続詞と接続表現",
+      "difficulty_level": "intermediate",
+      "importance": "medium"
+    },
+    "倒置": {
+      "patterns": [
+        "\\bnever\\s+(have|has|had|do|does|did)\\s+\\w+\\b",
+        "\\bseldom\\s+(have|has|had|do|does|did)\\s+\\w+\\b",
+        "\\bonly\\s+\\w+\\s+(can|could|will|would)\\s+\\w+\\b"
+      ],
+      "description": "倒置構文",
+      "difficulty_level": "advanced",
+      "importance": "medium"
+    }
+  },
+  "difficulty_weights": {
+    "basic": 1.0,
+    "intermediate": 1.5,
+    "advanced": 2.0
+  },
+  "importance_weights": {
+    "low": 0.5,
+    "medium": 1.0,
+    "high": 1.5
+  }
+}

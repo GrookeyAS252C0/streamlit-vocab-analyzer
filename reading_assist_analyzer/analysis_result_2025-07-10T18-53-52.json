@@ -1,0 +1,331 @@
+{
+  "metadata": {
+    "analysis_timestamp": "2025-07-10T18:53:52.576796",
+    "text_length": 180,
+    "analysis_version": "1.0.0"
+  },
+  "basic_statistics": {
+    "total_characters": 180,
+    "total_words": 23,
+    "total_sentences": 2,
+    "unique_words": 23,
+    "avg_word_length": 6.782608695652174,
+    "avg_sentence_length": 11.5
+  },
+  "vocabulary_analysis": {
+    "text_statistics": {
+      "total_words": 0,
+      "unique_words": 0,
+      "word_frequencies": {}
+    },
+    "vocabulary_coverage": {},
+    "summary": {}
+  },
+  "grammar_analysis": {
+    "grammar_items": {
+      "関係代名詞": {
+        "count": 4,
+        "frequency_per_100_words": 17.39,
+        "matches": [
+          "who",
+          "that",
+          "who",
+          "that"
+        ],
+        "difficulty_level": "intermediate",
+        "importance": "high",
+        "difficulty_score": 9.0,
+        "description": "関係代名詞の使用"
+      },
+      "完了形": {
+        "count": 1,
+        "frequency_per_100_words": 4.35,
+        "matches": [
+          "has revolutionized"
+        ],
+        "difficulty_level": "intermediate",
+        "importance": "high",
+        "difficulty_score": 2.25,
+        "description": "完了形（現在・過去・未来完了）"
+      },
+      "前置詞句": {
+        "count": 2,
+        "frequency_per_100_words": 8.7,
+        "matches": [
+          "of",
+          "in"
+        ],
+        "difficulty_level": "basic",
+        "importance": "medium",
+        "difficulty_score": 2.0,
+        "description": "前置詞と前置詞句"
+      }
+    },
+    "summary": {
+      "total_grammar_items": 3,
+      "total_grammar_occurrences": 7,
+      "grammar_density": 30.43,
+      "average_difficulty_score": 4.42,
+      "complexity_level": "上級"
+    },
+    "difficulty_analysis": {
+      "basic": {
+        "count": 2,
+        "items": [
+          {
+            "name": "前置詞句",
+            "count": 2,
+            "frequency": 8.7
+          }
+        ],
+        "percentage": 28.6
+      },
+      "intermediate": {
+        "count": 5,
+        "items": [
+          {
+            "name": "関係代名詞",
+            "count": 4,
+            "frequency": 17.39
+          },
+          {
+            "name": "完了形",
+            "count": 1,
+            "frequency": 4.35
+          }
+        ],
+        "percentage": 71.4
+      },
+      "advanced": {
+        "count": 0,
+        "items": [],
+        "percentage": 0.0
+      }
+    },
+    "text_statistics": {
+      "total_characters": 180,
+      "total_words": 23
+    }
+  },
+  "sentence_analysis": {
+    "basic_statistics": {
+      "total_sentences": 2,
+      "total_words": 23,
+      "total_characters": 179,
+      "avg_words_per_sentence": 11.5,
+      "avg_chars_per_sentence": 89.5,
+      "avg_chars_per_word": 7.78
+    },
+    "sentence_length_analysis": {
+      "mean_length": 11.5,
+      "median_length": 11.5,
+      "std_deviation": 3.54,
+      "min_length": 9,
+      "max_length": 14,
+      "length_distribution": {
+        "short_sentences": {
+          "count": 1,
+          "percentage": 50.0
+        },
+        "medium_sentences": {
+          "count": 1,
+          "percentage": 50.0
+        },
+        "long_sentences": {
+          "count": 0,
+          "percentage": 0.0
+        },
+        "very_long_sentences": {
+          "count": 0,
+          "percentage": 0.0
+        }
+      }
+    },
+    "complexity_analysis": {
+      "complexity_indicators": {
+        "complex_sentences": 0,
+        "simple_sentences": 2,
+        "coordination_count": 0,
+        "subordination_count": 0,
+        "relative_clauses": 0,
+        "nested_structures": 0
+      },
+      "complexity_ratios": {
+        "complex_sentence_ratio": 0.0,
+        "subordination_ratio": 0.0,
+        "relative_clause_ratio": 0.0
+      },
+      "overall_complexity_score": 0.0,
+      "complexity_level": "易"
+    },
+    "readability_scores": {
+      "flesch_reading_ease": 0.21,
+      "flesch_kincaid_grade": 16.09,
+      "automated_readability_index": 16.68,
+      "coleman_liau_index": 20.97,
+      "gunning_fog": 21.99,
+      "reading_level": "非常に難しい"
+    },
+    "structure_patterns": {
+      "pattern_counts": {
+        "questions": 2,
+        "exclamations": 0,
+        "imperatives": 0,
+        "conditionals": 0,
+        "passive_voice": 0,
+        "direct_speech": 0
+      },
+      "pattern_percentages": {
+        "questions_percentage": 100.0,
+        "exclamations_percentage": 0.0,
+        "imperatives_percentage": 0.0,
+        "conditionals_percentage": 0.0,
+        "passive_voice_percentage": 0.0,
+        "direct_speech_percentage": 0.0
+      },
+      "dominant_patterns": [
+        "questions"
+      ]
+    },
+    "detailed_sentences": [
+      {
+        "sentence_number": 1,
+        "text": "The development of artificial intelligence has revolutionized many industries.",
+        "word_count": 9,
+        "character_count": 78,
+        "complexity_level": "simple",
+        "has_subordinate_clause": false,
+        "has_relative_clause": false,
+        "sentence_type": "平叙文"
+      },
+      {
+        "sentence_number": 2,
+        "text": "Scientists who work in this field often encounter complex problems that require innovative solutions...",
+        "word_count": 14,
+        "character_count": 101,
+        "complexity_level": "simple",
+        "has_subordinate_clause": false,
+        "has_relative_clause": false,
+        "sentence_type": "平叙文"
+      }
+    ]
+  },
+  "comprehensive_assessment": {
+    "component_scores": {
+      "vocabulary_score": 100,
+      "grammar_score": 94.2,
+      "sentence_score": 26.47
+    },
+    "overall_difficulty_score": 79.59,
+    "difficulty_level": "やや難",
+    "reading_level": "大学受験レベル",
+    "estimated_reading_time_minutes": 1,
+    "score_breakdown": {
+      "vocabulary_contribution": 40.0,
+      "grammar_contribution": 32.97,
+      "sentence_contribution": 6.62
+    }
+  },
+  "integrated_report": {
+    "executive_summary": {
+      "overall_assessment": "やや難",
+      "reading_level": "大学受験レベル",
+      "estimated_reading_time": 1,
+      "key_challenges": [
+        "語彙力不足: 基礎単語の習得が必要",
+        "文法構造が複雑: 上級レベルの文法項目が多用"
+      ]
+    },
+    "detailed_findings": {
+      "vocabulary_insights": {
+        "best_vocabulary_book": {},
+        "coverage_summary": {},
+        "recommendations": [
+          "分析データが不足しています。"
+        ]
+      },
+      "grammar_insights": {
+        "complexity_level": "上級",
+        "most_frequent_items": [
+          {
+            "name": "関係代名詞",
+            "count": 4,
+            "frequency": 17.39
+          },
+          {
+            "name": "前置詞句",
+            "count": 2,
+            "frequency": 8.7
+          },
+          {
+            "name": "完了形",
+            "count": 1,
+            "frequency": 4.35
+          }
+        ],
+        "recommendations": [
+          "文法項目の使用頻度が高く、やや高難度の文章です。",
+          "高度な文法項目が多く含まれています。段階的な学習をお勧めします。",
+          "重点学習項目: 関係代名詞, 完了形, 前置詞句"
+        ]
+      },
+      "structure_insights": {
+        "sentence_complexity": "易",
+        "readability_level": "非常に難しい",
+        "dominant_patterns": [
+          "questions"
+        ]
+      }
+    },
+    "study_recommendations": {
+      "priority_areas": [
+        "語彙力強化",
+        "文法理解"
+      ],
+      "vocabulary_study": [
+        "基礎語彙の体系的学習",
+        "語根・接頭辞・接尾辞の学習"
+      ],
+      "grammar_study": [
+        "関係代名詞の集中学習",
+        "完了形の集中学習",
+        "前置詞句の集中学習"
+      ],
+      "reading_strategy": [
+        "段落ごとの要約練習",
+        "未知語の推測練習",
+        "文構造の視覚化練習"
+      ]
+    },
+    "action_plan": {
+      "study_schedule": {
+        "recommended_study_period": "6-8週間",
+        "daily_study_time": "60-90分",
+        "weekly_goals": [
+          "Week 1-2: 基礎語彙500語の習得",
+          "Week 3-4: 応用語彙300語の習得",
+          "Week 1: 高頻度文法項目の復習",
+          "Week 2-3: 複雑文構造の練習"
+        ]
+      },
+      "immediate_actions": [
+        "推奨単語帳での語彙学習開始",
+        "文法項目の体系的復習",
+        "同レベル文章での多読練習"
+      ],
+      "progress_tracking": {
+        "vocabulary_milestones": [
+          "週次単語テスト",
+          "カバレッジ率測定"
+        ],
+        "grammar_milestones": [
+          "文法項目別理解度チェック"
+        ],
+        "reading_milestones": [
+          "読解速度測定",
+          "理解度テスト"
+        ]
+      }
+    }
+  }
+}

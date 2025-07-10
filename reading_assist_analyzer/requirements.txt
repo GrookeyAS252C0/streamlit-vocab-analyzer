@@ -1,0 +1,30 @@
+# Core dependencies
+pandas>=1.5.0
+numpy>=1.24.0
+nltk>=3.8
+spacy>=3.6.0
+streamlit>=1.28.0
+plotly>=5.17.0
+
+# Text processing
+textstat>=0.7.3
+langdetect>=1.0.9
+wordcloud>=1.9.2
+
+# Data handling
+python-dotenv>=1.0.0
+pyyaml>=6.0
+openpyxl>=3.1.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Development
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Optional: Advanced NLP
+# transformers>=4.30.0
+# torch>=2.0.0
