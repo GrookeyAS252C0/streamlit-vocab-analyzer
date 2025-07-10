@@ -252,8 +252,8 @@ class MultiVocabularyAnalyzer:
             matched_words = target_words.intersection(unique_extracted)
             
             # 統計計算
-            target_coverage_rate = len(matched_words) / len(target_words) * 100 if target_words else 0
-            extraction_precision = len(matched_words) / len(unique_extracted) * 100 if unique_extracted else 0
+            vocabulary_utilization_rate = len(matched_words) / len(target_words) * 100 if target_words else 0
+            vocabulary_coverage_rate = len(matched_words) / len(unique_extracted) * 100 if unique_extracted else 0
             
             # 頻度分析
             matched_frequencies = {word: word_frequencies[word] for word in matched_words}
@@ -261,8 +261,8 @@ class MultiVocabularyAnalyzer:
             book_stats = {
                 'target_total_words': len(target_words),
                 'matched_words_count': len(matched_words),
-                'target_coverage_rate': round(target_coverage_rate, 2),
-                'extraction_precision': round(extraction_precision, 2),
+                'vocabulary_utilization_rate': round(vocabulary_utilization_rate, 2),
+                'vocabulary_coverage_rate': round(vocabulary_coverage_rate, 2),
                 'matched_words': sorted(list(matched_words)),
                 'unmatched_from_target': sorted(list(target_words - matched_words)),
                 'unmatched_from_extracted': sorted(list(unique_extracted - target_words)),
@@ -271,7 +271,7 @@ class MultiVocabularyAnalyzer:
             }
             
             multi_stats['vocabulary_coverage'][book_name] = book_stats
-            logger.info(f"{book_name}: カバレッジ率 {target_coverage_rate:.2f}%, 抽出精度 {extraction_precision:.2f}%")
+            logger.info(f"{book_name}: 単語帳使用率 {vocabulary_utilization_rate:.2f}%, 語彙カバレッジ率 {vocabulary_coverage_rate:.2f}%")
         
         return multi_stats
     
@@ -407,8 +407,8 @@ class MultiVocabularyAnalyzer:
             # 統計計算
             unique_count = len(unique_words)
             matched_count = len(matched_words)
-            coverage_rate = (matched_count / len(target_words) * 100) if target_words else 0
-            precision = (matched_count / unique_count * 100) if unique_count else 0
+            vocabulary_utilization_rate = (matched_count / len(target_words) * 100) if target_words else 0
+            vocabulary_coverage_rate = (matched_count / unique_count * 100) if unique_count else 0
             
             # 頻度分析
             matched_frequencies = {word: word_frequencies[word] for word in matched_words}
@@ -416,8 +416,8 @@ class MultiVocabularyAnalyzer:
             vocabulary_coverage[book_name] = {
                 'target_total_words': len(target_words),
                 'matched_words_count': matched_count,
-                'target_coverage_rate': round(coverage_rate, 2),
-                'extraction_precision': round(precision, 2),
+                'vocabulary_utilization_rate': round(vocabulary_utilization_rate, 2),
+                'vocabulary_coverage_rate': round(vocabulary_coverage_rate, 2),
                 'matched_words': sorted(list(matched_words)),
                 'matched_word_frequencies': dict(sorted(matched_frequencies.items(), 
                                                        key=lambda x: x[1], reverse=True)[:10])
@@ -560,7 +560,7 @@ class MultiVocabularyAnalyzer:
         
         # Target 1900の結果
         if 'Target 1900' in vocabulary_coverage:
-            target1900_coverage = vocabulary_coverage['Target 1900']['target_coverage_rate']
+            target1900_coverage = vocabulary_coverage['Target 1900']['vocabulary_utilization_rate']
             if target1900_coverage < 20:
                 recommendations.append("Target 1900カバレッジが低いです。基本語彙の強化が必要です。")
             elif target1900_coverage < 40:
@@ -569,12 +569,12 @@ class MultiVocabularyAnalyzer:
                 recommendations.append("Target 1900カバレッジは良好です。上級語彙学習に進むことをお勧めします。")
         
         # 最もカバレッジ率の高い単語帳を特定
-        best_book = max(vocabulary_coverage.items(), key=lambda x: x[1]['target_coverage_rate'])
-        recommendations.append(f"最も適合性が高い単語帳: {best_book[0]} (カバレッジ率: {best_book[1]['target_coverage_rate']:.1f}%)")
+        best_book = max(vocabulary_coverage.items(), key=lambda x: x[1]['vocabulary_utilization_rate'])
+        recommendations.append(f"最も適合性が高い単語帳: {best_book[0]} (単語帳使用率: {best_book[1]['vocabulary_utilization_rate']:.1f}%)")
         
         # 複数単語帳での総合的な推奨
         high_coverage_books = [name for name, data in vocabulary_coverage.items() 
-                              if data['target_coverage_rate'] > 25]
+                              if data['vocabulary_utilization_rate'] > 25]
         
         if len(high_coverage_books) >= 3:
             recommendations.append("複数の単語帳で高いカバレッジを達成しています。語彙力は十分です。")
@@ -591,8 +591,8 @@ class MultiVocabularyAnalyzer:
         """
         recommendations = []
         
-        coverage_rate = basic_stats['target_coverage_rate']
-        precision = basic_stats['extraction_precision']
+        coverage_rate = basic_stats['vocabulary_utilization_rate']
+        precision = basic_stats['vocabulary_coverage_rate']
         
         if coverage_rate < 30:
             recommendations.append("Target 1900カバレッジが低いです。より多様な教材での学習を推奨します。")
@@ -623,8 +623,8 @@ class MultiVocabularyAnalyzer:
         print(f"抽出ユニーク単語数: {stats['extracted_unique_words']:,}")
         print(f"一致単語数: {stats['matched_words_count']:,}")
         print()
-        print(f"🎯 Target 1900カバレッジ率: {stats['target_coverage_rate']:.2f}%")
-        print(f"🔍 抽出語彙精度: {stats['extraction_precision']:.2f}%")
+        print(f"🎯 Target 1900使用率: {stats['vocabulary_utilization_rate']:.2f}%")
+        print(f"🔍 語彙カバレッジ率: {stats['vocabulary_coverage_rate']:.2f}%")
         print()
         print("上位一致単語(頻度順):")
         for word, freq in list(stats['matched_word_frequencies'].items())[:10]:
@@ -643,9 +643,9 @@ class MultiVocabularyAnalyzer:
         # 各単語帳のカバレッジ率表示
         print("📊 単語帳別カバレッジ率:")
         for book_name, data in multi_stats['vocabulary_coverage'].items():
-            print(f"  • {book_name}: {data['target_coverage_rate']:.2f}% "
+            print(f"  • {book_name}: {data['vocabulary_utilization_rate']:.2f}% "
                   f"(一致: {data['matched_words_count']:,}/{data['target_total_words']:,}語, "
-                  f"精度: {data['extraction_precision']:.1f}%)")
+                  f"語彙カバレッジ率: {data['vocabulary_coverage_rate']:.1f}%)")
         
         print("\n🔥 最頻出単語:")
         for word, freq in list(multi_stats['word_frequencies'].items())[:10]:
@@ -670,9 +670,9 @@ class MultiVocabularyAnalyzer:
             # 各単語帳のカバレッジ率表示
             print(f"  📚 単語帳別カバレッジ率:")
             for book_name, book_data in data['vocabulary_coverage'].items():
-                print(f"    • {book_name}: {book_data['target_coverage_rate']:.2f}% "
+                print(f"    • {book_name}: {book_data['vocabulary_utilization_rate']:.2f}% "
                       f"(一致: {book_data['matched_words_count']:,}語, "
-                      f"精度: {book_data['extraction_precision']:.1f}%)")
+                      f"語彙カバレッジ率: {book_data['vocabulary_coverage_rate']:.1f}%)")
         
         print("="*80)
     
@@ -688,8 +688,8 @@ class MultiVocabularyAnalyzer:
             print(f"  総単語数: {data['total_words']:,}")
             print(f"  ユニーク単語数: {data['unique_words']:,}")
             print(f"  Target 1900一致数: {data['matched_words_count']:,}")
-            print(f"  カバレッジ率: {data['target_coverage_rate']:.2f}%")
-            print(f"  抽出精度: {data['extraction_precision']:.2f}%")
+            print(f"  単語帳使用率: {data['vocabulary_utilization_rate']:.2f}%")
+            print(f"  語彙カバレッジ率: {data['vocabulary_coverage_rate']:.2f}%")
             print(f"  OCR信頼度: {data['ocr_confidence']:.1%}")
             print(f"  処理ページ数: {data['pages_processed']}")
             
