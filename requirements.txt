@@ -1,6 +1,2 @@
 streamlit
-plotly
 pandas
-nltk
-textstat
-numpy
